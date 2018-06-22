@@ -3,6 +3,7 @@ package org.fwiffo.seedfinder.structure;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
+import org.fwiffo.seedfinder.biome.*;
 import org.fwiffo.seedfinder.util.Location;
 
 public class Structure {
@@ -82,18 +83,16 @@ public class Structure {
 		return fullLocation(regionX, regionZ, chunkLocation);
 	}
 
-	/*
-	public boolean structureWillSpawn(XZPair location, BiomeGenerator generator) {
-		int biomeAt = generator.getBiomeAt(location.getX(), location.getZ());
+	public boolean structureWillSpawn(Location location, BiomeGenerator generator) {
+		int biomeAt = generator.getBiomeAt(location.x, location.z);
 		return validBiomes.contains(biomeAt);
 	}
 
 	public boolean structureWillSpawn(int regionX, int regionZ, long worldSeed, BiomeGenerator generator) {
-		XZPair location = locationForRegion(regionX, regionZ, worldSeed);
+		Location location = fullLocation(regionX, regionZ, worldSeed);
 		if (location == null) {
 			return false;
 		}
 		return structureWillSpawn(location, generator);
 	}
-	*/
 }

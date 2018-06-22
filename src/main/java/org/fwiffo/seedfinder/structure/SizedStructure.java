@@ -2,6 +2,7 @@ package org.fwiffo.seedfinder.structure;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import org.fwiffo.seedfinder.biome.*;
 import org.fwiffo.seedfinder.util.Location;
 
 abstract public class SizedStructure extends Structure {
@@ -20,11 +21,10 @@ abstract public class SizedStructure extends Structure {
 		return (rnd.nextInt(structurePosRange) + rnd.nextInt(structurePosRange)) / 2;
 	}
 
-	/*
 	protected boolean areaHasValidBiomes(
 			BiomeGenerator generator, Location location, int size, HashSet<Integer> checkBiomes) {
-		int centerX = location.getX();
-		int centerZ = location.getZ();
+		int centerX = location.x;
+		int centerZ = location.z;
 		int left = (centerX - size) >> 2;
 		int top = (centerZ - size) >> 2;
 		int right = (centerX + size) >> 2;
@@ -42,11 +42,10 @@ abstract public class SizedStructure extends Structure {
 	}
 
 	public boolean structureWillSpawn(Location location, BiomeGenerator generator) {
-		int biomeAt = generator.getBiomeAt(location.getX(), location.getZ());
+		int biomeAt = generator.getBiomeAt(location.x, location.z);
 		if (!validBiomes.contains(biomeAt)) {
 			return false;
 		}
 		return areaHasValidBiomes(generator, location, structureSize, validBiomes);
 	}
-	*/
 }

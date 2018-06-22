@@ -2,6 +2,7 @@ package org.fwiffo.seedfinder.structure;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import org.fwiffo.seedfinder.biome.*;
 import org.fwiffo.seedfinder.util.Location;
 
 public class OceanMonument extends SizedStructure {
@@ -15,12 +16,10 @@ public class OceanMonument extends SizedStructure {
 		this.innerBiomes.add(24);
 	}
 
-	/*
 	public boolean structureWillSpawn(Location location, BiomeGenerator generator) {
 		if (!areaHasValidBiomes(generator, location, innerSize, innerBiomes)) {;
 			return false;
 		}
 		return super.structureWillSpawn(location, generator);
 	}
-	*/
 }
