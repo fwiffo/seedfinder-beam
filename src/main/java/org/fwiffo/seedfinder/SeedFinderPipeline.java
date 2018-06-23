@@ -60,6 +60,11 @@ public class SeedFinderPipeline {
 		boolean getOcean_spawn();
 		void setOcean_spawn(boolean value);
 
+		@Description("Search for seeds with a number nearby Woodland Mansions.")
+		@Default.Integer(0)
+		int getWoodland_mansions();
+		void setWoodland_mansions(int value);
+
 		@Description("Start seed for search - lower 48-bits only")
 		@Default.Long(0)
 		long getStart_seed();
@@ -76,21 +81,30 @@ public class SeedFinderPipeline {
 			PipelineOptionsFactory.fromArgs(args).withValidation().as(SeedFinderOptions.class);
 		Pipeline p = Pipeline.create(options);
 
-		// TODO: Generate 1 -> 2**48-1, pipe it through filters for potential
-		// structure generation, expand to full 64-bits, pipe it through filters
-		// for actual structure generation and biomes and whatever else.
-		PCollection<KV<Long, SeedMetadata>> finder = p
+		// Operations on the lower 48-bits of the seed.
+		PCollection<KV<Long, SeedMetadata>> seeds = p
 			.apply(GenerateSequence.from(
-						options.getStart_seed() / StructureFinder.PotentialQuadHutFinder.BATCH_SIZE).to(
-						options.getEnd_seed() / StructureFinder.PotentialQuadHutFinder.BATCH_SIZE))
-			.apply(ParDo.of(new StructureFinder.PotentialQuadHutFinder(options.getSearch_radius())))
-			.apply(ParDo.of(new StructureFinder.QuadHutVerifier()));
+					options.getStart_seed() / StructureFinder.HasPotentialQuadHuts.BATCH_SIZE).to(
+					options.getEnd_seed() / StructureFinder.HasPotentialQuadHuts.BATCH_SIZE))
+			.apply(ParDo.of(new StructureFinder.HasPotentialQuadHuts(options.getSearch_radius())));
 
-		if (options.getOcean_spawn()) {
-			finder = finder.apply(ParDo.of(new BiomeFinder.HasMostlyOceanSpawn()));
+		if (options.getWoodland_mansions() > 0) {
+			seeds = seeds.apply(ParDo.of(new StructureFinder.FindPotentialWoodlandMansions()));
 		}
 
-		finder.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
+		// Expands to full 64-bit seeds to do checks that require biomes.
+		seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyQuadHuts()));
+
+		if (options.getWoodland_mansions() > 0) {
+			seeds = seeds.apply(ParDo.of(
+					new StructureFinder.VerifyWoodlandMansions(options.getWoodland_mansions())));
+		}
+
+		if (options.getOcean_spawn()) {
+			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasMostlyOceanSpawn()));
+		}
+
+		seeds.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
 			@ProcessElement
 			public void processElement(ProcessContext c)  {
 				c.output(c.element().getValue().asString());

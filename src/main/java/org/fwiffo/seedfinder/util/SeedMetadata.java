@@ -10,35 +10,37 @@ public class SeedMetadata implements Serializable {
 	// These will get populated with empty/dummy values if not present
 	// to make them AvroCoderable.
 	public final long seed;
-	public final Location[] huts;
 	public final Location spawn;
+	public final Location[] huts;
+	public final Location[] mansions;
 
 	public SeedMetadata() {
 		this.seed = 0;
 		this.spawn = new Location();
 		this.huts = new Location[0];
-	}
-
-	public SeedMetadata(long seed) {
-		this.seed = seed;
-		this.spawn = new Location();
-		this.huts = new Location[0];
+		this.mansions = new Location[0];
 	}
 
 	public SeedMetadata(long seed, Location[] huts) {
 		this.seed = seed;
 		this.spawn = new Location(0, 0);
 		this.huts = huts;
+		this.mansions = new Location[0];
 	}
 
-	public SeedMetadata(long seed, Location spawn, Location[] huts) {
+	public SeedMetadata(long seed, Location spawn, Location[] huts, Location[] mansions) {
 		this.seed = seed;
 		this.spawn = spawn;
 		this.huts = huts;
+		this.mansions = mansions;
 	}
 
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
-		return new SeedMetadata(fullSeed, spawn, huts);
+		return new SeedMetadata(fullSeed, spawn, huts, mansions);
+	}
+
+	public SeedMetadata withMansions(Location[] mansions) {
+		return new SeedMetadata(seed, spawn, huts, mansions);
 	}
 
 	public String asString() {

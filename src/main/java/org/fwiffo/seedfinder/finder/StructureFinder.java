@@ -16,6 +16,7 @@ import org.fwiffo.seedfinder.biome.BiomeGenerator;
 import org.fwiffo.seedfinder.util.Location;
 import org.fwiffo.seedfinder.util.SeedMetadata;
 import org.fwiffo.seedfinder.structure.WitchHut;
+import org.fwiffo.seedfinder.structure.WoodlandMansion;
 
 public class StructureFinder {
 	private static final int SPAWN_SEARCH_RADIUS = 256;
@@ -31,6 +32,9 @@ public class StructureFinder {
 
 	private static final ThreadLocal<WitchHut> threadWitchHut =
 			ThreadLocal.withInitial(() -> new WitchHut());
+	private static final ThreadLocal<WoodlandMansion> threadWoodlandMansion =
+			ThreadLocal.withInitial(() -> new WoodlandMansion());
+
 	private static final Logger LOG = LoggerFactory.getLogger(StructureFinder.class);
 
 	private static Location locateSpawn(long seed, BiomeGenerator generator) {
@@ -56,7 +60,7 @@ public class StructureFinder {
 		return location;
 	}
 
-	public static class PotentialQuadHutFinder extends DoFn<Long, KV<Long, SeedMetadata>> {
+	public static class HasPotentialQuadHuts extends DoFn<Long, KV<Long, SeedMetadata>> {
 		private static final int HUT_CLOSENESS = 2;
 		private static final int MIN_EDGE = 1;
 		private static final int MAX_EDGE = 22;
@@ -66,11 +70,11 @@ public class StructureFinder {
 		// rounded up to the nearest region.
 		private final int radius;
 
-		public PotentialQuadHutFinder() {
+		public HasPotentialQuadHuts() {
 			this.radius = 4;
 		}
 
-		public PotentialQuadHutFinder(int radiusBlocks) {
+		public HasPotentialQuadHuts(int radiusBlocks) {
 			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
 			this.radius = (int)Math.ceil(
 					(float)radiusBlocks / threadWitchHut.get().structureRegionSize / 16);
@@ -147,7 +151,8 @@ public class StructureFinder {
 		}
 	}
 
-	public static class QuadHutVerifier extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+	public static class VerifyQuadHuts
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 		private static boolean allHutsWillSpawn(
 				BiomeGenerator generator, WitchHut hut, SeedMetadata seed) {
 			for (Location location : seed.huts) {
@@ -165,7 +170,7 @@ public class StructureFinder {
 
 			for (long high=0; high<1<<16; high++) {
 				long fullSeed = (high<<48) ^ baseSeed.seed;
-				BiomeGenerator generator = new BiomeGenerator(fullSeed, 2);
+				BiomeGenerator generator = new BiomeGenerator(fullSeed);
 				if (allHutsWillSpawn(generator, hut, baseSeed)) {
 					Location spawn = locateSpawn(fullSeed, generator);
 					c.output(KV.of(baseSeed.seed, baseSeed.expanded(fullSeed, spawn)));
@@ -173,4 +178,82 @@ public class StructureFinder {
 			}
 		}
 	}
+
+	public static class FindPotentialWoodlandMansions
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+		// Radius to search, in regions. User specifies as blocks, and it's
+		// rounded up to the nearest region.
+		private final int radius;
+
+		public FindPotentialWoodlandMansions() {
+			this.radius = 3;
+		}
+
+		public FindPotentialWoodlandMansions(int radiusBlocks) {
+			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
+			this.radius = (int)Math.ceil(
+					(float)radiusBlocks / threadWoodlandMansion.get().structureRegionSize / 16);
+		}
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			SeedMetadata seed = c.element().getValue();
+			ArrayList<Location> mansionLocations = new ArrayList<Location>(radius*radius*4);
+			WoodlandMansion mansion = threadWoodlandMansion.get();
+
+			for (int regionX=-radius; regionX < radius; regionX++) {
+				for (int regionZ=-radius; regionZ < radius; regionZ++) {
+					Location m = mansion.chunkLocationInRegion(regionX, regionZ, seed.seed);
+					if (m != null) {
+						mansionLocations.add(mansion.fullLocation(regionX, regionZ, m));
+					}
+				}
+			}
+			Location[] mansions = new Location[mansionLocations.size()];
+			mansions = mansionLocations.toArray(mansions);
+
+			c.output(KV.of(c.element().getKey(), seed.withMansions(mansions)));
+		}
+	}
+
+	public static class VerifyWoodlandMansions
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+
+		private final int minMansions;
+
+		public VerifyWoodlandMansions() {
+			this.minMansions = 1;
+		}
+
+		public VerifyWoodlandMansions(int minMansions) {
+			this.minMansions = minMansions;
+		}
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			if (minMansions < 1) {
+				c.output(c.element());
+				return;
+			}
+
+			WoodlandMansion mansion = threadWoodlandMansion.get();
+			SeedMetadata seed = c.element().getValue();
+			BiomeGenerator generator = new BiomeGenerator(seed.seed);
+
+			int mansionCount = 0;
+			// TODO: Rather than return early, maybe we want to display
+			// the mansion locations. If so, we'll need to update it with
+			// the verified ones.
+			for (Location location : seed.mansions) {
+				if (mansion.structureWillSpawn(location, generator)) {
+					mansionCount++;
+					if (mansionCount >= minMansions) {
+						c.output(c.element());
+						return;
+					}
+				}
+			}
+		}
+	}
+
 }

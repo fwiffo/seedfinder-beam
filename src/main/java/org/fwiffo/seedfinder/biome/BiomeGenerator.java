@@ -21,6 +21,10 @@ public class BiomeGenerator {
 
 	}
 
+	public BiomeGenerator(long seed) {
+		this(seed, 2);
+	}
+
 	public int getBiomeAt(int x, int z)
 	{
 		IntCache.resetIntCache();

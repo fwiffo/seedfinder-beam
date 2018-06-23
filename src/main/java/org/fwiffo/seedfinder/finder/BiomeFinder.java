@@ -72,7 +72,7 @@ public class BiomeFinder {
 		@ProcessElement
 		public void processElement(ProcessContext c) {
 			SeedMetadata seed = c.element().getValue();
-			BiomeGenerator generator = new BiomeGenerator(seed.seed, 2);
+			BiomeGenerator generator = new BiomeGenerator(seed.seed);
 
 			if (hasBiomes(generator, SPAWN_SIZE, seed.spawn.x, seed.spawn.z,
 						WATER_BIOMES, WATER_FRACTION)) {
