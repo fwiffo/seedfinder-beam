@@ -1,5 +1,6 @@
 package org.fwiffo.seedfinder.finder;
 
+import java.lang.Math;
 import java.lang.ThreadLocal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +18,6 @@ import org.fwiffo.seedfinder.util.SeedMetadata;
 import org.fwiffo.seedfinder.structure.WitchHut;
 
 public class StructureFinder {
-	// TODO: Make this a configuration option
-	private static final int radius = 4;
 	private static final int SPAWN_SEARCH_RADIUS = 256;
 	private static final ArrayList<Biome> VALID_SPAWN_BIOMES = new ArrayList<Biome>(
 			Arrays.asList(
@@ -63,7 +62,27 @@ public class StructureFinder {
 		private static final int MAX_EDGE = 22;
 		public static final int BATCH_SIZE = 16384;
 
-		private static SeedMetadata checkBaseSeed(WitchHut hut, long baseSeed) {
+		// Radius to search, in regions. User specifies as blocks, and it's
+		// rounded up to the nearest region.
+		private final int radius;
+
+		public PotentialQuadHutFinder() {
+			this.radius = 4;
+		}
+
+		public PotentialQuadHutFinder(int radiusBlocks) {
+			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
+			this.radius = (int)Math.ceil(
+					(float)radiusBlocks / threadWitchHut.get().structureRegionSize / 16);
+		}
+
+		private SeedMetadata checkBaseSeed(WitchHut hut, long baseSeed) {
+			// MC-131462 prevents East or South huts from spawning in negative
+			// X/Z coordinates respecitvely. If it's fixed, this should search
+			// negative coordinates starting at -radius.
+
+			// As an optimiation, skips by two to find potential huts that could
+			// be a member of a quad hut group while only checking 1 out of 4.
 			for (int regionX=0; regionX < radius; regionX += (regionX < radius-2 ? 2 : 1)) {
 				for (int regionZ=0; regionZ < radius; regionZ += (regionZ < radius-2 ? 2 : 1)) {
 					Location check = hut.chunkLocationInRegionEdge(
@@ -149,7 +168,7 @@ public class StructureFinder {
 				BiomeGenerator generator = new BiomeGenerator(fullSeed, 2);
 				if (allHutsWillSpawn(generator, hut, baseSeed)) {
 					Location spawn = locateSpawn(fullSeed, generator);
-					c.output(KV.of(fullSeed, baseSeed.expanded(fullSeed, spawn)));
+					c.output(KV.of(baseSeed.seed, baseSeed.expanded(fullSeed, spawn)));
 				}
 			}
 		}

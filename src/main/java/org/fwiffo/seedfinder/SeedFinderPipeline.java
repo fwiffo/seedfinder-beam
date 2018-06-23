@@ -2,12 +2,13 @@ package org.fwiffo.seedfinder;
 
 import org.apache.beam.sdk.io.GenerateSequence;
 import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.Validation.Required;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
@@ -47,6 +48,27 @@ public class SeedFinderPipeline {
 		@Required
 		String getOutput();
 		void setOutput(String value);
+
+		@Description("Radius to search for structures and biomes, in blocks; " +
+				"structures will round up to an integer number of regions")
+		@Default.Integer(2048)
+		int getSearch_radius();
+		void setSearch_radius(int value);
+
+		@Description("Look for seeds with spawn chunks that are mostly ocean")
+		@Default.Boolean(false)
+		boolean getOcean_spawn();
+		void setOcean_spawn(boolean value);
+
+		@Description("Start seed for search - lower 48-bits only")
+		@Default.Long(0)
+		long getStart_seed();
+		void setStart_seed(long value);
+
+		@Description("End seed for search - lower 48-bits only")
+		@Default.Long(1<<30)
+		long getEnd_seed();
+		void setEnd_seed(long value);
 	}
 
 	public static void main(String[] args) {
@@ -57,12 +79,18 @@ public class SeedFinderPipeline {
 		// TODO: Generate 1 -> 2**48-1, pipe it through filters for potential
 		// structure generation, expand to full 64-bits, pipe it through filters
 		// for actual structure generation and biomes and whatever else.
-		p.apply(GenerateSequence.from(1L).to(
-					4000000000L/StructureFinder.PotentialQuadHutFinder.BATCH_SIZE))
-		.apply(ParDo.of(new StructureFinder.PotentialQuadHutFinder()))
-		.apply(ParDo.of(new StructureFinder.QuadHutVerifier()))
-		.apply(ParDo.of(new BiomeFinder.HasMostlyOceanSpawn()))
-		.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
+		PCollection<KV<Long, SeedMetadata>> finder = p
+			.apply(GenerateSequence.from(
+						options.getStart_seed() / StructureFinder.PotentialQuadHutFinder.BATCH_SIZE).to(
+						options.getEnd_seed() / StructureFinder.PotentialQuadHutFinder.BATCH_SIZE))
+			.apply(ParDo.of(new StructureFinder.PotentialQuadHutFinder(options.getSearch_radius())))
+			.apply(ParDo.of(new StructureFinder.QuadHutVerifier()));
+
+		if (options.getOcean_spawn()) {
+			finder = finder.apply(ParDo.of(new BiomeFinder.HasMostlyOceanSpawn()));
+		}
+
+		finder.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
 			@ProcessElement
 			public void processElement(ProcessContext c)  {
 				c.output(c.element().getValue().asString());
