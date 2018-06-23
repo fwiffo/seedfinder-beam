@@ -1,12 +1,16 @@
 package org.fwiffo.seedfinder.finder;
 
 import java.lang.ThreadLocal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.fwiffo.seedfinder.biome.Biome;
 import org.fwiffo.seedfinder.biome.BiomeGenerator;
 import org.fwiffo.seedfinder.util.Location;
 import org.fwiffo.seedfinder.util.SeedMetadata;
@@ -15,9 +19,43 @@ import org.fwiffo.seedfinder.structure.WitchHut;
 public class StructureFinder {
 	// TODO: Make this a configuration option
 	private static final int radius = 4;
+	private static final int SPAWN_SEARCH_RADIUS = 256;
+	private static final ArrayList<Biome> VALID_SPAWN_BIOMES = new ArrayList<Biome>(
+			Arrays.asList(
+				Biome.forest,
+				Biome.plains,
+				Biome.taiga,
+				Biome.taigaHills,
+				Biome.forestHills,
+				Biome.jungle,
+				Biome.jungleHills));
+
 	private static final ThreadLocal<WitchHut> threadWitchHut =
 			ThreadLocal.withInitial(() -> new WitchHut());
 	private static final Logger LOG = LoggerFactory.getLogger(StructureFinder.class);
+
+	private static Location locateSpawn(long seed, BiomeGenerator generator) {
+		Random random = new Random(seed);
+		int radius = SPAWN_SEARCH_RADIUS >> 2;
+		int size = radius * 2 + 1;
+
+		int[] biomeData = generator.getBiomeData(-radius, -radius, size, size, true);
+		int numberOfValidFound = 0;
+		Location location = null;
+		for (int i=0; i<size*size; i++) {
+			Biome biome = Biome.biomes[biomeData[i]];
+			if (!VALID_SPAWN_BIOMES.contains(biome)) continue;
+			// Choose any of the valid spawn locations with equal probability.
+			if (location != null && random.nextInt(numberOfValidFound+1) != 0) continue;
+
+			location = new Location((i % size - radius) << 2, (i / size - radius) << 2);
+			numberOfValidFound++;
+		}
+		if (location == null) {
+			return new Location(0, 0);
+		}
+		return location;
+	}
 
 	public static class PotentialQuadHutFinder extends DoFn<Long, KV<Long, SeedMetadata>> {
 		private static final int HUT_CLOSENESS = 2;
@@ -91,9 +129,9 @@ public class StructureFinder {
 	}
 
 	public static class QuadHutVerifier extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
-		private static boolean allHutsWillSpawn(long fullSeed, WitchHut hut, SeedMetadata s) {
-			BiomeGenerator generator = new BiomeGenerator(fullSeed, 2);
-			for (Location location : s.getHuts()) {
+		private static boolean allHutsWillSpawn(
+				BiomeGenerator generator, WitchHut hut, SeedMetadata seed) {
+			for (Location location : seed.huts) {
 				if (!hut.structureWillSpawn(location, generator)) {
 					return false;
 				}
@@ -108,8 +146,10 @@ public class StructureFinder {
 
 			for (long high=0; high<1<<16; high++) {
 				long fullSeed = (high<<48) ^ baseSeed.seed;
-				if (allHutsWillSpawn(fullSeed, hut, baseSeed)) {
-					c.output(KV.of(fullSeed, baseSeed.withFullSeed(fullSeed)));
+				BiomeGenerator generator = new BiomeGenerator(fullSeed, 2);
+				if (allHutsWillSpawn(generator, hut, baseSeed)) {
+					Location spawn = locateSpawn(fullSeed, generator);
+					c.output(KV.of(fullSeed, baseSeed.expanded(fullSeed, spawn)));
 				}
 			}
 		}
