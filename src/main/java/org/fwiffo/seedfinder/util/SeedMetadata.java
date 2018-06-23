@@ -44,7 +44,7 @@ public class SeedMetadata implements Serializable {
 	}
 
 	public String asString() {
-		ArrayList<String> parts = new ArrayList(8);
+		ArrayList<String> parts = new ArrayList<String>(8);
 
 		parts.add(String.format("%20d", seed));
 		if (spawn != null) {
