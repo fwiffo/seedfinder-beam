@@ -9,11 +9,18 @@ public class OceanMonument extends SizedStructure {
 	private static final int innerSize = 16;
 	private final HashSet<Integer> innerBiomes;
 
+	private static final Biome[] WATER_BIOMES = new Biome[] {
+		Biome.river,
+		Biome.frozenRiver,
+		Biome.ocean,
+		Biome.frozenOcean,
+		Biome.deepOcean,
+	};
+
 	public OceanMonument() {
-		// Ocean, Frozen Ocean, River, Frozen River, Deep Ocean
-		super(10387313L, 27, 32, new Integer[]{0, 10, 7, 11, 24}, 29);
+		super(10387313L, 27, 32, WATER_BIOMES, 29);
 		this.innerBiomes = new HashSet<Integer>();
-		this.innerBiomes.add(24);
+		this.innerBiomes.add(Biome.deepOcean.index);
 	}
 
 	public boolean structureWillSpawn(Location location, BiomeGenerator generator) {

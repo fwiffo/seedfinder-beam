@@ -10,7 +10,7 @@ abstract public class SizedStructure extends Structure {
 
 	public SizedStructure(
 			long structureSeed, int structurePosRange, int structureRegionSize,
-			Integer[] validBiomes, int structureSize) {
+			Biome[] validBiomes, int structureSize) {
 		super(structureSeed, structurePosRange, structureRegionSize, validBiomes);
 		this.structureSize = structureSize;
 	}

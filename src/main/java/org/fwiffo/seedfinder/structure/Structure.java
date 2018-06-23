@@ -19,11 +19,15 @@ public class Structure {
 
 	public Structure(
 			long structureSeed, int structurePosRange, int structureRegionSize,
-			Integer[] validBiomes) {
+			Biome[] validBiomes) {
 		this.structureSeed = structureSeed;
 		this.structurePosRange = structurePosRange;
 		this.structureRegionSize = structureRegionSize;
-		this.validBiomes = new HashSet<Integer>(Arrays.asList(validBiomes));
+
+		this.validBiomes = new HashSet<Integer>();
+		for (Biome biome : validBiomes) {
+			this.validBiomes.add(biome.index);
+		}
 	}
 
 	private void setSeed(long regionX, long regionZ, long worldSeed) {
