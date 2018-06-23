@@ -4,16 +4,17 @@ import java.util.*;
 import minecraft.layer.*;
 
 public class BiomeGenerator {
-	public GenLayer biomeIndexLayer;
-	public GenLayer biomeIndexLayerquarter;
+	public final GenLayer biomeIndexLayer;
+	public final GenLayer biomeIndexLayerquarter;
 	public BiomeGenerator(long seed, int quarter)
 	{
-		if(quarter == 0)
+		if(quarter == 0) {
 			biomeIndexLayer = GenLayer.func_180781_a(seed, "")[1]; //1:1 resolution
-		else if(quarter == 1)
+			biomeIndexLayerquarter = null;
+		} else if(quarter == 1) {
+			biomeIndexLayer = null;
 			biomeIndexLayerquarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
-		else
-		{
+		} else {
 			biomeIndexLayer = GenLayer.func_180781_a(seed, null)[1];
 			biomeIndexLayerquarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
 		}

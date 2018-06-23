@@ -1,33 +1,40 @@
 package minecraft.layer;
 
 import com.google.common.collect.Lists;
+import java.lang.ThreadLocal;
 import java.util.List;
+import java.util.ArrayList;
 
 public class IntCache
 {
-    private static int intCacheSize = 256;
+    private static final ThreadLocal<Integer> intCacheSize =
+        ThreadLocal.withInitial(() -> 256);
 
     /**
      * A list of pre-allocated int[256] arrays that are currently unused and can be returned by getIntCache()
      */
-    private static List<int[]> freeSmallArrays = Lists.newArrayList();
+    private static ThreadLocal<List<int[]>> freeSmallArrays =
+        ThreadLocal.withInitial(() -> new ArrayList<int[]>());
 
     /**
      * A list of pre-allocated int[256] arrays that were previously returned by getIntCache() and which will not be re-
      * used again until resetIntCache() is called.
      */
-    private static List<int[]> inUseSmallArrays = Lists.newArrayList();
+    private static ThreadLocal<List<int[]>> inUseSmallArrays =
+        ThreadLocal.withInitial(() -> new ArrayList<int[]>());
 
     /**
      * A list of pre-allocated int[cacheSize] arrays that are currently unused and can be returned by getIntCache()
      */
-    private static List<int[]> freeLargeArrays = Lists.newArrayList();
+    private static ThreadLocal<List<int[]>> freeLargeArrays =
+        ThreadLocal.withInitial(() -> new ArrayList<int[]>());
 
     /**
      * A list of pre-allocated int[cacheSize] arrays that were previously returned by getIntCache() and which will not
      * be re-used again until resetIntCache() is called.
      */
-    private static List<int[]> inUseLargeArrays = Lists.newArrayList();
+    private static ThreadLocal<List<int[]>> inUseLargeArrays =
+        ThreadLocal.withInitial(() -> new ArrayList<int[]>());
 
     public static synchronized int[] getIntCache(int p_76445_0_)
     {
@@ -35,38 +42,38 @@ public class IntCache
 
         if (p_76445_0_ <= 256)
         {
-            if (freeSmallArrays.isEmpty())
+            if (freeSmallArrays.get().isEmpty())
             {
                 var1 = new int[256];
-                inUseSmallArrays.add(var1);
+                inUseSmallArrays.get().add(var1);
                 return var1;
             }
             else
             {
-                var1 = (int[])freeSmallArrays.remove(freeSmallArrays.size() - 1);
-                inUseSmallArrays.add(var1);
+                var1 = (int[])freeSmallArrays.get().remove(freeSmallArrays.get().size() - 1);
+                inUseSmallArrays.get().add(var1);
                 return var1;
             }
         }
-        else if (p_76445_0_ > intCacheSize)
+        else if (p_76445_0_ > intCacheSize.get())
         {
-            intCacheSize = p_76445_0_;
-            freeLargeArrays.clear();
-            inUseLargeArrays.clear();
-            var1 = new int[intCacheSize];
-            inUseLargeArrays.add(var1);
+            intCacheSize.set(p_76445_0_);
+            freeLargeArrays.get().clear();
+            inUseLargeArrays.get().clear();
+            var1 = new int[intCacheSize.get()];
+            inUseLargeArrays.get().add(var1);
             return var1;
         }
-        else if (freeLargeArrays.isEmpty())
+        else if (freeLargeArrays.get().isEmpty())
         {
-            var1 = new int[intCacheSize];
-            inUseLargeArrays.add(var1);
+            var1 = new int[intCacheSize.get()];
+            inUseLargeArrays.get().add(var1);
             return var1;
         }
         else
         {
-            var1 = (int[])freeLargeArrays.remove(freeLargeArrays.size() - 1);
-            inUseLargeArrays.add(var1);
+            var1 = (int[])freeLargeArrays.get().remove(freeLargeArrays.get().size() - 1);
+            inUseLargeArrays.get().add(var1);
             return var1;
         }
     }
@@ -76,20 +83,20 @@ public class IntCache
      */
     public static synchronized void resetIntCache()
     {
-        if (!freeLargeArrays.isEmpty())
+        if (!freeLargeArrays.get().isEmpty())
         {
-            freeLargeArrays.remove(freeLargeArrays.size() - 1);
+            freeLargeArrays.get().remove(freeLargeArrays.get().size() - 1);
         }
 
-        if (!freeSmallArrays.isEmpty())
+        if (!freeSmallArrays.get().isEmpty())
         {
-            freeSmallArrays.remove(freeSmallArrays.size() - 1);
+            freeSmallArrays.get().remove(freeSmallArrays.get().size() - 1);
         }
 
-        freeLargeArrays.addAll(inUseLargeArrays);
-        freeSmallArrays.addAll(inUseSmallArrays);
-        inUseLargeArrays.clear();
-        inUseSmallArrays.clear();
+        freeLargeArrays.get().addAll(inUseLargeArrays.get());
+        freeSmallArrays.get().addAll(inUseSmallArrays.get());
+        inUseLargeArrays.get().clear();
+        inUseSmallArrays.get().clear();
     }
 
     /**
@@ -98,6 +105,6 @@ public class IntCache
      */
     public static synchronized String getCacheSizes()
     {
-        return "cache: " + freeLargeArrays.size() + ", tcache: " + freeSmallArrays.size() + ", allocated: " + inUseLargeArrays.size() + ", tallocated: " + inUseSmallArrays.size();
+        return "cache: " + freeLargeArrays.get().size() + ", tcache: " + freeSmallArrays.get().size() + ", allocated: " + inUseLargeArrays.get().size() + ", tallocated: " + inUseSmallArrays.get().size();
     }
 }

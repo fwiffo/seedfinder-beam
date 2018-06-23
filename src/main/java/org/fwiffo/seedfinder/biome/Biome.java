@@ -102,10 +102,9 @@ public class Biome {
 	public static final Biome mesaPlateauM		   = new Biome("Mesa Plateau M",		   167);
 
 
-	public String name;
-	public int index;
-	public int color;
-	public BiomeType type;
+	public final String name;
+	public final int index;
+	public final BiomeType type;
 
 	public Biome(String name, int index) {
 		this(name, index, biomes[index - 128].type.getRare());
@@ -132,7 +131,7 @@ public class Biome {
 
 
 	public static final class BiomeType { // TODO: Rename once we figure out what this actually is!
-		public float value1, value2;
+		public final float value1, value2;
 		public BiomeType(float value1, float value2) {
 			this.value1 = value1;
 			this.value2 = value2;
