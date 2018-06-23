@@ -4,6 +4,8 @@ import java.lang.ThreadLocal;
 import java.util.Hashtable;
 import java.util.Random;
 
+import org.apache.beam.sdk.metrics.Metrics;
+import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.slf4j.Logger;
@@ -69,6 +71,10 @@ public class BiomeFinder {
 	}
 
 	public static class HasMostlyOceanSpawn extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+
+		private final Counter countSeedsFound = Metrics.counter(
+				HasMostlyOceanSpawn.class, "ocean-spawn-full-seeds-verified");
+
 		@ProcessElement
 		public void processElement(ProcessContext c) {
 			SeedMetadata seed = c.element().getValue();
@@ -77,6 +83,7 @@ public class BiomeFinder {
 			if (hasBiomes(generator, SPAWN_SIZE, seed.spawn.x, seed.spawn.z,
 						WATER_BIOMES, WATER_FRACTION)) {
 				c.output(c.element());
+				countSeedsFound.inc();
 			}
 		}
 	}

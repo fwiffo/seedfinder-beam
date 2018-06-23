@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.apache.beam.sdk.metrics.Metrics;
+import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.slf4j.Logger;
@@ -65,6 +67,11 @@ public class StructureFinder {
 		private static final int MIN_EDGE = 1;
 		private static final int MAX_EDGE = 22;
 		public static final int BATCH_SIZE = 16384;
+
+		private final Counter countSeedsChecked = Metrics.counter(
+				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-checked");
+		private final Counter countPotentialFound = Metrics.counter(
+				HasPotentialQuadHuts.class, "quad-huts-48bit-potenial-seeds-found");
 
 		// Radius to search, in regions. User specifies as blocks, and it's
 		// rounded up to the nearest region.
@@ -146,13 +153,21 @@ public class StructureFinder {
 				if (result != null) {
 					LOG.info(String.format("Checking bits with potential %d...", baseSeed));
 					c.output(KV.of(baseSeed, result));
+					countPotentialFound.inc();
 				}
 			}
+			countSeedsChecked.inc(endSeed-startSeed);
 		}
 	}
 
 	public static class VerifyQuadHuts
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+
+		private final Counter countSeedsChecked = Metrics.counter(
+				VerifyQuadHuts.class, "quad-huts-full-seeds-checked");
+		private final Counter countSeedsFound = Metrics.counter(
+				VerifyQuadHuts.class, "quad-huts-full-seeds-verified");
+
 		private static boolean allHutsWillSpawn(
 				BiomeGenerator generator, WitchHut hut, SeedMetadata seed) {
 			for (Location location : seed.huts) {
@@ -174,8 +189,10 @@ public class StructureFinder {
 				if (allHutsWillSpawn(generator, hut, baseSeed)) {
 					Location spawn = locateSpawn(fullSeed, generator);
 					c.output(KV.of(baseSeed.seed, baseSeed.expanded(fullSeed, spawn)));
+					countSeedsFound.inc();
 				}
 			}
+			countSeedsChecked.inc(1<<16);
 		}
 	}
 
@@ -219,6 +236,9 @@ public class StructureFinder {
 	public static class VerifyWoodlandMansions
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
+		private final Counter countSeedsFound = Metrics.counter(
+				VerifyWoodlandMansions.class, "woodland-mansion-full-seeds-verified");
+
 		private final int minMansions;
 
 		public VerifyWoodlandMansions() {
@@ -249,6 +269,7 @@ public class StructureFinder {
 					mansionCount++;
 					if (mansionCount >= minMansions) {
 						c.output(c.element());
+						countSeedsFound.inc();
 						return;
 					}
 				}
