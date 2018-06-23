@@ -13,6 +13,7 @@ import org.apache.beam.sdk.values.KV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.biome.Biome;
 import org.fwiffo.seedfinder.biome.BiomeGenerator;
 import org.fwiffo.seedfinder.util.Location;
@@ -21,7 +22,6 @@ import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
 
 public class StructureFinder {
-	private static final int SPAWN_SEARCH_RADIUS = 256;
 	private static final ArrayList<Biome> VALID_SPAWN_BIOMES = new ArrayList<Biome>(
 			Arrays.asList(
 				Biome.forest,
@@ -41,7 +41,7 @@ public class StructureFinder {
 
 	private static Location locateSpawn(long seed, BiomeGenerator generator) {
 		Random random = new Random(seed);
-		int radius = SPAWN_SEARCH_RADIUS >> 2;
+		int radius = Constants.SPAWN_RADIUS >> 2;
 		int size = radius * 2 + 1;
 
 		int[] biomeData = generator.getBiomeData(-radius, -radius, size, size, true);
@@ -66,7 +66,6 @@ public class StructureFinder {
 		private static final int HUT_CLOSENESS = 2;
 		private static final int MIN_EDGE = 1;
 		private static final int MAX_EDGE = 22;
-		public static final int BATCH_SIZE = 16384;
 
 		private final Counter countSeedsChecked = Metrics.counter(
 				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-checked");
@@ -145,8 +144,8 @@ public class StructureFinder {
 		public void processElement(ProcessContext c) {
 			WitchHut hut = threadWitchHut.get();
 
-			long startSeed = c.element() * BATCH_SIZE;
-			long endSeed = (c.element() + 1) * BATCH_SIZE;
+			long startSeed = c.element() * Constants.BATCH_SIZE;
+			long endSeed = (c.element() + 1) * Constants.BATCH_SIZE;
 
 			for (long baseSeed=startSeed; baseSeed < endSeed; baseSeed++) {
 				SeedMetadata result = checkBaseSeed(hut, baseSeed);

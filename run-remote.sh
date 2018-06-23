@@ -7,4 +7,4 @@ GOOGLE_APPLICATION_CREDENTIALS='credentials.json' time mvn compile exec:java \
   --region=us-west1 \
   --runner=DataflowRunner \
   --jobName=minecraft-seed-finder \
-  --start_seed=0 --end_seed=4000000000 --woodland_mansions=2"
+  --start_seed=0 --end_seed=4G --woodland_mansions=2"
