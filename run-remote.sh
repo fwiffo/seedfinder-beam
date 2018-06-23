@@ -1,10 +1,10 @@
 #!/bin/bash
-GOOGLE_APPLICATION_CREDENTIALS='credentials.json' mvn compile exec:java \
+GOOGLE_APPLICATION_CREDENTIALS='credentials.json' time mvn compile exec:java \
   -Dexec.mainClass=org.fwiffo.seedfinder.SeedFinderPipeline \
   -Dexec.args="--project=minecraft-seed-finder \
-  --stagingLocation=gs://minecraft-seed-finder/staging/ \
-  --output=gs://corded-shard-208105/output \
+  --stagingLocation=gs://seed-finder/staging/ \
+  --output=gs://seed-finder/output/seeds \
+  --region=us-west1 \
   --runner=DataflowRunner \
-  --jobName=minecraft-seedfinder" \
-  -Dexec.args='--output=./output/seeds --start_seed=1000000000 --end_seed=2000000000 --woodland_mansions=2' \
-  "$@"
+  --jobName=minecraft-seed-finder \
+  --start_seed=0 --end_seed=4000000000 --woodland_mansions=2"
