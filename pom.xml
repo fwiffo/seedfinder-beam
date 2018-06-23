@@ -51,6 +51,9 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
+          <compilerArgs>
+              <arg>-Xlint:all</arg>
+          </compilerArgs>
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
