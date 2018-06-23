@@ -46,9 +46,10 @@ public class SeedMetadata implements Serializable {
 
 		parts.add(String.format("%20d", seed));
 		if (spawn != null) {
-			parts.add(String.format("spawn: %s", spawn.asString()));
+			parts.add(String.format("(spawn %4d, %4d)", spawn.x, spawn.z));
 		}
 		if (huts != null) {
+			parts.add("huts:");
 			for (Location hut : huts) {
 				parts.add(hut.asString());
 			}
