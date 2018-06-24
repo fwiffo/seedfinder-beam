@@ -4,18 +4,19 @@ import java.io.Serializable;
 import org.fwiffo.seedfinder.biome.Biome;
 
 public class BiomeSearchConfig implements Serializable  {
-	public static final BiomeSearchConfig OCEAN = new BiomeSearchConfig(
-			0.8f,
-			new Biome[]{
-				Biome.ocean, Biome.frozenOcean, Biome.deepOcean,
-				Biome.oceanM, Biome.frozenOceanM, Biome.deepOceanM});
 
-	public static final BiomeSearchConfig MUSHROOM_ISLAND = new BiomeSearchConfig(
-			0.5f,
-			new Biome[]{
-				Biome.mushroomIsland, Biome.mushroomIslandShore,
-				Biome.mushroomIslandM, Biome.mushroomIslandShoreM},
+	public static final BiomeSearchConfig FLOWER_FOREST = new BiomeSearchConfig(
+			0.3f,
+			new Biome[]{Biome.flowerForest},
 			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+
+	public static final BiomeSearchConfig ICE_SPIKES = new BiomeSearchConfig(
+			0.5f,
+			new Biome[]{Biome.icePlainsSpikes},
+			new Biome[]{
+				Biome.icePlains, Biome.iceMountains,
+				Biome.frozenOcean, Biome.frozenRiver, Biome.frozenOceanM, Biome.frozenRiverM,
+				Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig JUNGLE = new BiomeSearchConfig(
 			0.8f,
@@ -37,18 +38,22 @@ public class BiomeSearchConfig implements Serializable  {
 				Biome.mesaBryce, Biome.mesaPlateauFM, Biome.mesaPlateauM},
 			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
 
-	public static final BiomeSearchConfig FLOWER_FOREST = new BiomeSearchConfig(
-			0.3f,
-			new Biome[]{Biome.flowerForest},
+	public static final BiomeSearchConfig MUSHROOM_ISLAND = new BiomeSearchConfig(
+			0.5f,
+			new Biome[]{
+				Biome.mushroomIsland, Biome.mushroomIslandShore,
+				Biome.mushroomIslandM, Biome.mushroomIslandShoreM},
 			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
 
-	public static final BiomeSearchConfig ICE_SPIKES = new BiomeSearchConfig(
-			0.5f,
-			new Biome[]{Biome.icePlainsSpikes},
+	public static final BiomeSearchConfig OCEAN = new BiomeSearchConfig(
+			0.8f,
 			new Biome[]{
-				Biome.icePlains, Biome.iceMountains,
-				Biome.frozenOcean, Biome.frozenRiver, Biome.frozenOceanM, Biome.frozenRiverM,
-				Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+				Biome.ocean, Biome.frozenOcean, Biome.deepOcean,
+				Biome.oceanM, Biome.frozenOceanM, Biome.deepOceanM});
+
+	public enum Name {
+		none, flower_forest, ice_spikes, jungle, mega_taiga, mesa, mushroom_island, ocean
+	}
 
 	public final float minFraction;
 	public final int[] includeBiomes;
@@ -72,5 +77,18 @@ public class BiomeSearchConfig implements Serializable  {
 
 	public BiomeSearchConfig(float minFraction, Biome[] includeBiomes) {
 		this(minFraction, includeBiomes, new Biome[]{});
+	}
+
+	public static BiomeSearchConfig getConfig(Name name) {
+		switch (name) {
+			case flower_forest:   return FLOWER_FOREST;
+			case ice_spikes:      return ICE_SPIKES;
+			case jungle:          return JUNGLE;
+			case mega_taiga:      return MEGA_TAIGA;
+			case mesa:            return MESA;
+			case mushroom_island: return MUSHROOM_ISLAND;
+			case ocean:           return OCEAN;
+		}
+		return null;
 	}
 }

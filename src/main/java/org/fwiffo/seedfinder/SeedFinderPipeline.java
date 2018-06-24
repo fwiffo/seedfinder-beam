@@ -1,5 +1,7 @@
 package org.fwiffo.seedfinder;
 
+import java.lang.Math;
+
 import org.apache.beam.sdk.io.GenerateSequence;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.Default;
@@ -7,17 +9,13 @@ import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.Validation.Required;
-import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.values.KV;
-import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.KV;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.fwiffo.seedfinder.biome.BiomeSearchConfig;
 import org.fwiffo.seedfinder.Constants;
@@ -31,21 +29,22 @@ import org.fwiffo.seedfinder.util.SeedMetadata;
  * <p>To run locally
  * mvn compile exec:java \
  *   -Dexec.mainClass=org.fwiffo.seedfinder.SeedFinderPipeline \
- *   -Dexec.args="--output=./output/"
+ *   -Dexec.args="--output=./output/seeds \
+ *   --start_seed=0 --end_seed=1G ..."
  *
  * <p>To run using managed resource in Google Cloud Platform:
- * mvn compile exec:java \
+ * GOOGLE_APPLICATION_CREDENTIALS='credentials.json' mvn compile exec:java \
  *   -Dexec.mainClass=org.fwiffo.seedfinder.SeedFinderPipeline \
- *   -Dexec.args="--project=<YOUR_PROJECT_ID>"
- *   --stagingLocation=<STAGING_LOCATION_IN_CLOUD_STORAGE>
- *   --output=<OUTPUT_LOCATION_IN_CLOUD_STORAGE>
- *   --runner=DataflowRunner
+ *   -Dexec.args="--project=<YOUR_PROJECT_ID> \
+ *   --stagingLocation=<STAGING_LOCATION_IN_CLOUD_STORAGE> \
+ *   --output=<OUTPUT_LOCATION_IN_CLOUD_STORAGE> \
+ *   --region=us-west1 \
+ *   --runner=DataflowRunner \
+ *   --jobName=minecraft-seed-finder \
+ *   --start_seed=0 --end_seed=5G ..."
  */
 public class SeedFinderPipeline {
-	private static final Logger LOG = LoggerFactory.getLogger(SeedFinderPipeline.class);
 	// Only search the lower 48 bits of the key space.
-	private static final long MAX_SEED = (1<<48) - 1;
-
 	public interface SeedFinderOptions extends PipelineOptions {
 		@Description("Path of the file to write to")
 		@Required
@@ -58,10 +57,11 @@ public class SeedFinderPipeline {
 		int getSearch_radius();
 		void setSearch_radius(int value);
 
-		@Description("Look for seeds with spawn chunks that are mostly ocean")
-		@Default.Boolean(false)
-		boolean getOcean_spawn();
-		void setOcean_spawn(boolean value);
+		@Description("Search for seeds with specific biomes at spawn; " +
+				"flower_forest, ice_spikes, jungle, mega_taiga, mesa, mushroom_island, ocean")
+		@Default.Enum("none")
+		BiomeSearchConfig.Name getSpawn_biomes();
+		void setSpawn_biomes(BiomeSearchConfig.Name value);
 
 		@Description("Search for seeds with a number nearby Woodland Mansions")
 		@Default.Integer(0)
@@ -110,8 +110,10 @@ public class SeedFinderPipeline {
 			PipelineOptionsFactory.fromArgs(args).withValidation().as(SeedFinderOptions.class);
 		Pipeline p = Pipeline.create(options);
 
-		long startSeed = parseHuman(options.getStart_seed()) / Constants.BATCH_SIZE;
-		long endSeed = parseHuman(options.getEnd_seed()) / Constants.BATCH_SIZE;
+		long startSeed = Math.max(
+				parseHuman(options.getStart_seed()) / Constants.BATCH_SIZE, 0);
+		long endSeed = Math.min(
+				parseHuman(options.getEnd_seed()) / Constants.BATCH_SIZE, Constants.MAX_SEED);
 
 		// Operations on the lower 48-bits of the seed.
 		GenerateSequence seeds48bit = GenerateSequence.from(startSeed).to(endSeed);
@@ -136,8 +138,9 @@ public class SeedFinderPipeline {
 					new StructureFinder.VerifyWoodlandMansions(options.getWoodland_mansions())));
 		}
 
-		if (options.getOcean_spawn()) {
-			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasSpawnBiomes(BiomeSearchConfig.OCEAN)));
+		BiomeSearchConfig config = BiomeSearchConfig.getConfig(options.getSpawn_biomes());
+		if (config != null) {
+			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasSpawnBiomes(config)));
 		}
 
 		seeds.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
