@@ -4,25 +4,20 @@ import java.util.*;
 import minecraft.layer.*;
 
 public class BiomeGenerator {
-	public final GenLayer biomeIndexLayer;
-	public final GenLayer biomeIndexLayerquarter;
-	public BiomeGenerator(long seed, int quarter) {
-		IntCache.resetIntCache();
-		if(quarter == 0) {
-			biomeIndexLayer = GenLayer.func_180781_a(seed, "")[1]; //1:1 resolution
-			biomeIndexLayerquarter = null;
-		} else if(quarter == 1) {
-			biomeIndexLayer = null;
-			biomeIndexLayerquarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
-		} else {
-			biomeIndexLayer = GenLayer.func_180781_a(seed, null)[1];
-			biomeIndexLayerquarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
-		}
-
-	}
+	private GenLayer biomeIndexLayer;
+	private GenLayer biomeIndexLayerQuarter;
 
 	public BiomeGenerator(long seed) {
-		this(seed, 2);
+		setSeed(seed);
+	}
+
+	public void setSeed(long seed) {
+		// TODO: Maybe we can increase performance by only creating one
+		// generator with threadLocals and only resetting the cache if
+		// the seed changes? I don't understand the biome internals.
+		IntCache.resetIntCache();
+		biomeIndexLayer = GenLayer.func_180781_a(seed, null)[1];
+		biomeIndexLayerQuarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
 	}
 
 	public int getBiomeAt(int x, int z) {
@@ -38,7 +33,7 @@ public class BiomeGenerator {
 	}
 
 	public int[] getQuarterResolutionBiomeData(int x, int y, int width, int height) {
-		return biomeIndexLayerquarter.getInts(x, y, width, height);
+		return biomeIndexLayerQuarter.getInts(x, y, width, height);
 	}
 
 	public Hashtable<Integer, Float> biomeCensus(int x, int z, int radius) {
