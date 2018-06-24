@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.biome.Biome;
 import org.fwiffo.seedfinder.biome.BiomeGenerator;
+import org.fwiffo.seedfinder.structure.OceanMonument;
 import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
 import org.fwiffo.seedfinder.util.Location;
@@ -34,6 +35,8 @@ public class StructureFinder {
 
 	private static final ThreadLocal<WitchHut> threadWitchHut =
 			ThreadLocal.withInitial(() -> new WitchHut());
+	private static final ThreadLocal<OceanMonument> threadOceanMonument =
+			ThreadLocal.withInitial(() -> new OceanMonument());
 	private static final ThreadLocal<WoodlandMansion> threadWoodlandMansion =
 			ThreadLocal.withInitial(() -> new WoodlandMansion());
 
@@ -193,6 +196,83 @@ public class StructureFinder {
 				}
 			}
 			countSeedsChecked.inc(1<<16);
+		}
+	}
+
+	public static class HasPotentialOceanMonuments
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+		private final int closeness;
+		private final int minEdge;
+		private final int maxEdge;
+		private final Counter countPotentialFound = Metrics.counter(
+				HasPotentialOceanMonuments.class, "monument-48bit-potenial-seeds-found");
+
+		public HasPotentialOceanMonuments(int closeness) {
+			this.closeness = closeness;
+			// The position of the ocean monument on the top and left of the
+			// group will be relative to the potential witch hut locations,
+			// since the range for monuments is bigger than for witch huts.
+			// The potential locations of the two structure types are the
+			// same for the right and bottom sides of the quad hut area.
+			this.maxEdge = threadWitchHut.get().structurePosRange - closeness;
+			this.minEdge = closeness - 1;
+		}
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			SeedMetadata seed = c.element().getValue();
+			OceanMonument monument = threadOceanMonument.get();
+
+			Location r = monument.fullLocationToRegion(seed.huts[0]);
+			Location topLeft = monument.chunkLocationInRegion(r.x, r.z, seed.seed);
+			Location topRight = monument.chunkLocationInRegion(r.x+1, r.z, seed.seed);
+			Location bottomLeft = monument.chunkLocationInRegion(r.x, r.z+1, seed.seed);
+			Location bottomRight = monument.chunkLocationInRegion(r.x+1, r.z+1, seed.seed);
+
+			ArrayList<Location> monuments = new ArrayList<Location>(seed.huts.length);
+			if (topLeft != null && topLeft.x >= maxEdge && topLeft.z >= maxEdge) {
+				monuments.add(monument.fullLocation(r.x, r.z, topLeft));
+			}
+			if (topRight != null && topRight.x <= minEdge && topRight.z >= maxEdge) {
+				monuments.add(monument.fullLocation(r.x+1, r.z, topRight));
+			}
+			if (bottomLeft != null && bottomLeft.x >= maxEdge && bottomLeft.z <= minEdge) {
+				monuments.add(monument.fullLocation(r.x, r.z+1, bottomLeft));
+			}
+			if (bottomRight != null && bottomRight.x <= minEdge && bottomRight.z <= minEdge) {
+				monuments.add(monument.fullLocation(r.x+1, r.z+1, bottomRight));
+			}
+
+			if (monuments.size() == 0) {
+				return;
+			}
+
+			Location[] monumentArray = new Location[monuments.size()];
+			monumentArray = monuments.toArray(monumentArray);
+			c.output(KV.of(seed.seed, seed.withMonuments(monumentArray)));
+			countPotentialFound.inc();
+		}
+	}
+
+	public static class VerifyOceanMonuments
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+
+		private final Counter countSeedsFound = Metrics.counter(
+				VerifyOceanMonuments.class, "monument-full-seeds-verified");
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			OceanMonument monument = threadOceanMonument.get();
+			SeedMetadata seed = c.element().getValue();
+			BiomeGenerator generator = new BiomeGenerator(seed.seed);
+
+			for (Location location : seed.monuments) {
+				if (monument.structureWillSpawn(location, generator)) {
+					c.output(c.element());
+					countSeedsFound.inc();
+					return;
+				}
+			}
 		}
 	}
 

@@ -87,6 +87,19 @@ public class Structure {
 		return fullLocation(regionX, regionZ, chunkLocation);
 	}
 
+	private static int fullToRegion(int x, int regionSize) {
+		if (x < 0) {
+			return (x-8 - regionSize * 16 + 1) / (regionSize * 16);
+		}
+		return (x-8) / 16 / regionSize;
+	}
+
+	public Location fullLocationToRegion(Location location) {
+		return new Location(
+				fullToRegion(location.x, structureRegionSize),
+				fullToRegion(location.z, structureRegionSize));
+	}
+
 	public boolean structureWillSpawn(Location location, BiomeGenerator generator) {
 		int biomeAt = generator.getBiomeAt(location.x, location.z);
 		return validBiomes.contains(biomeAt);

@@ -13,12 +13,14 @@ public class SeedMetadata implements Serializable {
 	public final Location spawn;
 	public final Location[] huts;
 	public final Location[] mansions;
+	public final Location[] monuments;
 
 	public SeedMetadata() {
 		this.seed = 0;
 		this.spawn = new Location();
 		this.huts = new Location[0];
 		this.mansions = new Location[0];
+		this.monuments = new Location[0];
 	}
 
 	public SeedMetadata(long seed, Location[] huts) {
@@ -26,21 +28,27 @@ public class SeedMetadata implements Serializable {
 		this.spawn = new Location(0, 0);
 		this.huts = huts;
 		this.mansions = new Location[0];
+		this.monuments = new Location[0];
 	}
 
-	public SeedMetadata(long seed, Location spawn, Location[] huts, Location[] mansions) {
+	public SeedMetadata(long seed, Location spawn, Location[] huts, Location[] mansions, Location[] monuments) {
 		this.seed = seed;
 		this.spawn = spawn;
 		this.huts = huts;
 		this.mansions = mansions;
+		this.monuments = monuments;
 	}
 
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
-		return new SeedMetadata(fullSeed, spawn, huts, mansions);
+		return new SeedMetadata(fullSeed, spawn, huts, mansions, monuments);
 	}
 
 	public SeedMetadata withMansions(Location[] mansions) {
-		return new SeedMetadata(seed, spawn, huts, mansions);
+		return new SeedMetadata(seed, spawn, huts, mansions, monuments);
+	}
+
+	public SeedMetadata withMonuments(Location[] monuments) {
+		return new SeedMetadata(seed, spawn, huts, mansions, monuments);
 	}
 
 	public String asString() {

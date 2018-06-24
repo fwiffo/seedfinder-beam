@@ -68,10 +68,16 @@ public class SeedFinderPipeline {
 		boolean getAll_biomes_nearby();
 		void setAll_biomes_nearby(boolean value);
 
-		@Description("Search for seeds with a number nearby Woodland Mansions")
+		@Description("Search for seeds with a number nearby woodland mansions")
 		@Default.Integer(0)
 		int getWoodland_mansions();
 		void setWoodland_mansions(int value);
+
+		@Description("Search for seeds with ocean monuments close to quad huts; a max distance " +
+				"from the perimeter in chunks. 5 is pretty close, 4 or less is vanishingly rare.")
+		@Default.Integer(0)
+		int getOcean_monument_near_huts();
+		void setOcean_monument_near_huts(int value);
 
 		@Description("Lower 48 bits of start seed for search; 0 to 256T")
 		@Default.String("0")
@@ -104,9 +110,13 @@ public class SeedFinderPipeline {
 	}
 
 	// TODO:
-	// Biome types for spawn and search radius
-	//   options for having lots of a particular biome (e.g. mushroom)
-	// Monuments close to quad huts
+	// Output to and input from a machine readable format. It'll be better to
+	// get a lot of basic quad hut seeds computed, then go back and search
+	// them for other features. Probably can precompute a large percentage
+	// of the total key-space.
+
+	// TODO: more search options
+	// Lots of a particular biome (e.g. mushroom)
 	// Stronghold close to quad huts
 	public static void main(String[] args) {
 		SeedFinderOptions options =
@@ -129,12 +139,21 @@ public class SeedFinderPipeline {
 		PCollection<KV<Long, SeedMetadata>> seeds = p.apply(seeds48bit)
 			.apply(ParDo.of(new StructureFinder.HasPotentialQuadHuts(searchRadius)));
 
+		if (options.getOcean_monument_near_huts() > 0) {
+			seeds = seeds.apply(ParDo.of(new StructureFinder.HasPotentialOceanMonuments(
+							options.getOcean_monument_near_huts())));
+		}
+
 		if (options.getWoodland_mansions() > 0) {
 			seeds = seeds.apply(ParDo.of(new StructureFinder.FindPotentialWoodlandMansions()));
 		}
 
 		// Expands to full 64-bit seeds to do checks that require biomes.
 		seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyQuadHuts()));
+
+		if (options.getOcean_monument_near_huts() > 0) {
+			seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyOceanMonuments()));
+		}
 
 		if (options.getWoodland_mansions() > 0) {
 			seeds = seeds.apply(ParDo.of(
