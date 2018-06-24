@@ -41,10 +41,11 @@ public class StructureFinder {
 
 	private static Location locateSpawn(long seed, BiomeGenerator generator) {
 		Random random = new Random(seed);
-		int radius = Constants.SPAWN_RADIUS >> 2;
+		// Quarter resolution biome sarch.
+		int radius = Constants.LEGAL_SPAWN_RADIUS / 4;
 		int size = radius * 2 + 1;
 
-		int[] biomeData = generator.getBiomeData(-radius, -radius, size, size, true);
+		int[] biomeData = generator.getQuarterResolutionBiomeData(-radius, -radius, size, size);
 		int numberOfValidFound = 0;
 		Location location = null;
 		for (int i=0; i<size*size; i++) {

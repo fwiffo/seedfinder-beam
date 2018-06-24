@@ -19,6 +19,7 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.fwiffo.seedfinder.biome.BiomeSearchConfig;
 import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.finder.StructureFinder;
 import org.fwiffo.seedfinder.finder.BiomeFinder;
@@ -136,7 +137,7 @@ public class SeedFinderPipeline {
 		}
 
 		if (options.getOcean_spawn()) {
-			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasMostlyOceanSpawn()));
+			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasSpawnBiomes(BiomeSearchConfig.OCEAN)));
 		}
 
 		seeds.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {

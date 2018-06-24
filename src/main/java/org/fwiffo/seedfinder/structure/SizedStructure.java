@@ -32,7 +32,7 @@ abstract public class SizedStructure extends Structure {
 		int width = right - left + 1;
 		int height = bottom - top + 1;
 
-		int[] biomes = generator.getBiomeData(left, top, width, height, true);
+		int[] biomes = generator.getQuarterResolutionBiomeData(left, top, width, height);
 		for (int i=0; i<width*height; i++) {
 			if (!checkBiomes.contains(biomes[i])) {
 				return false;
