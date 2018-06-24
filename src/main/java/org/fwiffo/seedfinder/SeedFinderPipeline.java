@@ -21,6 +21,7 @@ import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.finder.BiomeFinder;
 import org.fwiffo.seedfinder.finder.BiomeSearchConfig;
 import org.fwiffo.seedfinder.finder.StructureFinder;
+import org.fwiffo.seedfinder.util.SeedFamily;
 import org.fwiffo.seedfinder.util.SeedMetadata;
 
 /**
@@ -131,33 +132,36 @@ public class SeedFinderPipeline {
 
 		// Operations on the lower 48-bits of the seed.
 		GenerateSequence seeds48bit = GenerateSequence.from(startSeed).to(endSeed);
-		if (options.getMax_sequence_time() > 0) {
-			seeds48bit = seeds48bit.withMaxReadTime(
-					Duration.standardMinutes(options.getMax_sequence_time()));
+		int maxTime = options.getMax_sequence_time();
+		if (maxTime > 0) {
+			seeds48bit = seeds48bit.withMaxReadTime(Duration.standardMinutes(maxTime));
 		}
 
-		PCollection<KV<Long, SeedMetadata>> seeds = p.apply(seeds48bit)
+		PCollection<KV<Long, SeedFamily>> potentialSeeds = p.apply(seeds48bit)
 			.apply(ParDo.of(new StructureFinder.HasPotentialQuadHuts(searchRadius)));
 
-		if (options.getOcean_monument_near_huts() > 0) {
-			seeds = seeds.apply(ParDo.of(new StructureFinder.HasPotentialOceanMonuments(
-							options.getOcean_monument_near_huts())));
+		int monumentDistance = options.getOcean_monument_near_huts();
+		if (monumentDistance > 0) {
+			potentialSeeds = potentialSeeds
+				.apply(ParDo.of(new StructureFinder.HasPotentialOceanMonuments(monumentDistance)));
 		}
 
-		if (options.getWoodland_mansions() > 0) {
-			seeds = seeds.apply(ParDo.of(new StructureFinder.FindPotentialWoodlandMansions()));
+		int numMansions = options.getWoodland_mansions();
+		if (numMansions > 0) {
+			potentialSeeds = potentialSeeds
+				.apply(ParDo.of(new StructureFinder.FindPotentialWoodlandMansions()));
 		}
 
 		// Expands to full 64-bit seeds to do checks that require biomes.
-		seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyQuadHuts()));
+		PCollection<KV<Long, SeedMetadata>> seeds = potentialSeeds
+			.apply(ParDo.of(new StructureFinder.VerifyQuadHuts()));
 
-		if (options.getOcean_monument_near_huts() > 0) {
+		if (monumentDistance > 0) {
 			seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyOceanMonuments()));
 		}
 
-		if (options.getWoodland_mansions() > 0) {
-			seeds = seeds.apply(ParDo.of(
-					new StructureFinder.VerifyWoodlandMansions(options.getWoodland_mansions())));
+		if (numMansions > 0) {
+			seeds = seeds.apply(ParDo.of(new StructureFinder.VerifyWoodlandMansions(numMansions)));
 		}
 
 		BiomeSearchConfig config = BiomeSearchConfig.getConfig(options.getSpawn_biomes());

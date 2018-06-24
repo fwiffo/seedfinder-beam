@@ -20,6 +20,7 @@ import org.fwiffo.seedfinder.structure.OceanMonument;
 import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
 import org.fwiffo.seedfinder.util.Location;
+import org.fwiffo.seedfinder.util.SeedFamily;
 import org.fwiffo.seedfinder.util.SeedMetadata;
 
 public class StructureFinder {
@@ -66,7 +67,7 @@ public class StructureFinder {
 		return location;
 	}
 
-	public static class HasPotentialQuadHuts extends DoFn<Long, KV<Long, SeedMetadata>> {
+	public static class HasPotentialQuadHuts extends DoFn<Long, KV<Long, SeedFamily>> {
 		private static final int HUT_CLOSENESS = 2;
 		private static final int MIN_EDGE = 1;
 		private static final int MAX_EDGE = 22;
@@ -90,7 +91,7 @@ public class StructureFinder {
 					(float)radiusBlocks / threadWitchHut.get().structureRegionSize / 16);
 		}
 
-		private SeedMetadata checkBaseSeed(WitchHut hut, long baseSeed) {
+		private SeedFamily checkBaseSeed(WitchHut hut, long baseSeed) {
 			// MC-131462 prevents East or South huts from spawning in negative
 			// X/Z coordinates respecitvely. If it's fixed, this should search
 			// negative coordinates starting at -radius.
@@ -138,7 +139,7 @@ public class StructureFinder {
 						hut.fullLocation(rx, rz+1, bottomLeft),
 						hut.fullLocation(rx+1, rz+1, bottomRight),
 					};
-					return new SeedMetadata(baseSeed, huts);
+					return new SeedFamily(baseSeed, huts);
 				}
 			}
 			return null;
@@ -152,7 +153,7 @@ public class StructureFinder {
 			long endSeed = (c.element() + 1) * Constants.BATCH_SIZE;
 
 			for (long baseSeed=startSeed; baseSeed < endSeed; baseSeed++) {
-				SeedMetadata result = checkBaseSeed(hut, baseSeed);
+				SeedFamily result = checkBaseSeed(hut, baseSeed);
 				if (result != null) {
 					LOG.info(String.format("Checking bits with potential %d...", baseSeed));
 					c.output(KV.of(baseSeed, result));
@@ -164,7 +165,7 @@ public class StructureFinder {
 	}
 
 	public static class VerifyQuadHuts
-			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 
 		private final Counter countSeedsChecked = Metrics.counter(
 				VerifyQuadHuts.class, "quad-huts-full-seeds-checked");
@@ -172,8 +173,8 @@ public class StructureFinder {
 				VerifyQuadHuts.class, "quad-huts-full-seeds-verified");
 
 		private static boolean allHutsWillSpawn(
-				BiomeGenerator generator, WitchHut hut, SeedMetadata seed) {
-			for (Location location : seed.huts) {
+				BiomeGenerator generator, WitchHut hut, Location[] huts) {
+			for (Location location : huts) {
 				if (!hut.structureWillSpawn(location, generator)) {
 					return false;
 				}
@@ -184,14 +185,14 @@ public class StructureFinder {
 		@ProcessElement
 		public void processElement(ProcessContext c) {
 			WitchHut hut = threadWitchHut.get();
-			SeedMetadata baseSeed = c.element().getValue();
+			SeedFamily family = c.element().getValue();
 
 			for (long high=0; high<1<<16; high++) {
-				long fullSeed = (high<<48) ^ baseSeed.seed;
+				long fullSeed = (high<<48) ^ family.baseSeed;
 				BiomeGenerator generator = new BiomeGenerator(fullSeed);
-				if (allHutsWillSpawn(generator, hut, baseSeed)) {
+				if (allHutsWillSpawn(generator, hut, family.huts)) {
 					Location spawn = locateSpawn(fullSeed, generator);
-					c.output(KV.of(baseSeed.seed, baseSeed.expanded(fullSeed, spawn)));
+					c.output(KV.of(family.baseSeed, family.expanded(fullSeed, spawn)));
 					countSeedsFound.inc();
 				}
 			}
@@ -200,7 +201,7 @@ public class StructureFinder {
 	}
 
 	public static class HasPotentialOceanMonuments
-			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedFamily>> {
 		private final int closeness;
 		private final int minEdge;
 		private final int maxEdge;
@@ -220,36 +221,36 @@ public class StructureFinder {
 
 		@ProcessElement
 		public void processElement(ProcessContext c) {
-			SeedMetadata seed = c.element().getValue();
+			SeedFamily family = c.element().getValue();
 			OceanMonument monument = threadOceanMonument.get();
 
-			Location r = monument.fullLocationToRegion(seed.huts[0]);
-			Location topLeft = monument.chunkLocationInRegion(r.x, r.z, seed.seed);
-			Location topRight = monument.chunkLocationInRegion(r.x+1, r.z, seed.seed);
-			Location bottomLeft = monument.chunkLocationInRegion(r.x, r.z+1, seed.seed);
-			Location bottomRight = monument.chunkLocationInRegion(r.x+1, r.z+1, seed.seed);
+			Location r = monument.fullLocationToRegion(family.huts[0]);
+			Location topLeft = monument.chunkLocationInRegion(r.x, r.z, family.baseSeed);
+			Location topRight = monument.chunkLocationInRegion(r.x+1, r.z, family.baseSeed);
+			Location bottomLeft = monument.chunkLocationInRegion(r.x, r.z+1, family.baseSeed);
+			Location bottomRight = monument.chunkLocationInRegion(r.x+1, r.z+1, family.baseSeed);
 
-			ArrayList<Location> monuments = new ArrayList<Location>(seed.huts.length);
+			ArrayList<Location> monumentList = new ArrayList<Location>(family.huts.length);
 			if (topLeft != null && topLeft.x >= maxEdge && topLeft.z >= maxEdge) {
-				monuments.add(monument.fullLocation(r.x, r.z, topLeft));
+				monumentList.add(monument.fullLocation(r.x, r.z, topLeft));
 			}
 			if (topRight != null && topRight.x <= minEdge && topRight.z >= maxEdge) {
-				monuments.add(monument.fullLocation(r.x+1, r.z, topRight));
+				monumentList.add(monument.fullLocation(r.x+1, r.z, topRight));
 			}
 			if (bottomLeft != null && bottomLeft.x >= maxEdge && bottomLeft.z <= minEdge) {
-				monuments.add(monument.fullLocation(r.x, r.z+1, bottomLeft));
+				monumentList.add(monument.fullLocation(r.x, r.z+1, bottomLeft));
 			}
 			if (bottomRight != null && bottomRight.x <= minEdge && bottomRight.z <= minEdge) {
-				monuments.add(monument.fullLocation(r.x+1, r.z+1, bottomRight));
+				monumentList.add(monument.fullLocation(r.x+1, r.z+1, bottomRight));
 			}
 
-			if (monuments.size() == 0) {
+			if (monumentList.size() == 0) {
 				return;
 			}
 
-			Location[] monumentArray = new Location[monuments.size()];
-			monumentArray = monuments.toArray(monumentArray);
-			c.output(KV.of(seed.seed, seed.withMonuments(monumentArray)));
+			Location[] monuments = new Location[monumentList.size()];
+			monuments = monumentList.toArray(monuments);
+			c.output(KV.of(family.baseSeed, family.withMonuments(monuments)));
 			countPotentialFound.inc();
 		}
 	}
@@ -277,7 +278,7 @@ public class StructureFinder {
 	}
 
 	public static class FindPotentialWoodlandMansions
-			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedFamily>> {
 		// Radius to search, in regions. User specifies as blocks, and it's
 		// rounded up to the nearest region.
 		private final int radius;
@@ -294,13 +295,13 @@ public class StructureFinder {
 
 		@ProcessElement
 		public void processElement(ProcessContext c) {
-			SeedMetadata seed = c.element().getValue();
+			SeedFamily family = c.element().getValue();
 			ArrayList<Location> mansionLocations = new ArrayList<Location>(radius*radius*4);
 			WoodlandMansion mansion = threadWoodlandMansion.get();
 
 			for (int regionX=-radius; regionX < radius; regionX++) {
 				for (int regionZ=-radius; regionZ < radius; regionZ++) {
-					Location m = mansion.chunkLocationInRegion(regionX, regionZ, seed.seed);
+					Location m = mansion.chunkLocationInRegion(regionX, regionZ, family.baseSeed);
 					if (m != null) {
 						mansionLocations.add(mansion.fullLocation(regionX, regionZ, m));
 					}
@@ -309,7 +310,7 @@ public class StructureFinder {
 			Location[] mansions = new Location[mansionLocations.size()];
 			mansions = mansionLocations.toArray(mansions);
 
-			c.output(KV.of(c.element().getKey(), seed.withMansions(mansions)));
+			c.output(KV.of(family.baseSeed, family.withMansions(mansions)));
 		}
 	}
 
