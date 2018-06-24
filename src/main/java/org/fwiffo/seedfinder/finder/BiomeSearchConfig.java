@@ -1,6 +1,7 @@
-package org.fwiffo.seedfinder.biome;
+package org.fwiffo.seedfinder.finder;
 
 import java.io.Serializable;
+
 import org.fwiffo.seedfinder.biome.Biome;
 
 public class BiomeSearchConfig implements Serializable  {

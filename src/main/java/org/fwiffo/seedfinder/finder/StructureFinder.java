@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.biome.Biome;
 import org.fwiffo.seedfinder.biome.BiomeGenerator;
-import org.fwiffo.seedfinder.util.Location;
-import org.fwiffo.seedfinder.util.SeedMetadata;
 import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
+import org.fwiffo.seedfinder.util.Location;
+import org.fwiffo.seedfinder.util.SeedMetadata;
 
 public class StructureFinder {
 	private static final ArrayList<Biome> VALID_SPAWN_BIOMES = new ArrayList<Biome>(

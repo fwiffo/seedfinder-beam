@@ -7,6 +7,7 @@ public class BiomeGenerator {
 	public final GenLayer biomeIndexLayer;
 	public final GenLayer biomeIndexLayerquarter;
 	public BiomeGenerator(long seed, int quarter) {
+		IntCache.resetIntCache();
 		if(quarter == 0) {
 			biomeIndexLayer = GenLayer.func_180781_a(seed, "")[1]; //1:1 resolution
 			biomeIndexLayerquarter = null;
@@ -25,7 +26,6 @@ public class BiomeGenerator {
 	}
 
 	public int getBiomeAt(int x, int z) {
-		IntCache.resetIntCache();
 		return biomeIndexLayer.getInts(x, z, 1, 1)[0];
 	}
 

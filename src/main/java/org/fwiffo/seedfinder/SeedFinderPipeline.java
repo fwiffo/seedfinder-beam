@@ -17,10 +17,10 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.KV;
 import org.joda.time.Duration;
 
-import org.fwiffo.seedfinder.biome.BiomeSearchConfig;
 import org.fwiffo.seedfinder.Constants;
-import org.fwiffo.seedfinder.finder.StructureFinder;
 import org.fwiffo.seedfinder.finder.BiomeFinder;
+import org.fwiffo.seedfinder.finder.BiomeSearchConfig;
+import org.fwiffo.seedfinder.finder.StructureFinder;
 import org.fwiffo.seedfinder.util.SeedMetadata;
 
 /**
@@ -63,6 +63,11 @@ public class SeedFinderPipeline {
 		BiomeSearchConfig.Name getSpawn_biomes();
 		void setSpawn_biomes(BiomeSearchConfig.Name value);
 
+		@Description("Search for seeds with all biome types within the search radius")
+		@Default.Boolean(false)
+		boolean getAll_biomes_nearby();
+		void setAll_biomes_nearby(boolean value);
+
 		@Description("Search for seeds with a number nearby Woodland Mansions")
 		@Default.Integer(0)
 		int getWoodland_mansions();
@@ -100,8 +105,6 @@ public class SeedFinderPipeline {
 
 	// TODO:
 	// Biome types for spawn and search radius
-	//   options for choosing a specific spawn biome
-	//   options for having all biome types in the search region
 	//   options for having lots of a particular biome (e.g. mushroom)
 	// Monuments close to quad huts
 	// Stronghold close to quad huts
@@ -114,6 +117,7 @@ public class SeedFinderPipeline {
 				parseHuman(options.getStart_seed()) / Constants.BATCH_SIZE, 0);
 		long endSeed = Math.min(
 				parseHuman(options.getEnd_seed()) / Constants.BATCH_SIZE, Constants.MAX_SEED);
+		int searchRadius = options.getSearch_radius();
 
 		// Operations on the lower 48-bits of the seed.
 		GenerateSequence seeds48bit = GenerateSequence.from(startSeed).to(endSeed);
@@ -123,8 +127,7 @@ public class SeedFinderPipeline {
 		}
 
 		PCollection<KV<Long, SeedMetadata>> seeds = p.apply(seeds48bit)
-			.apply(ParDo.of(new StructureFinder.HasPotentialQuadHuts(
-					options.getSearch_radius())));
+			.apply(ParDo.of(new StructureFinder.HasPotentialQuadHuts(searchRadius)));
 
 		if (options.getWoodland_mansions() > 0) {
 			seeds = seeds.apply(ParDo.of(new StructureFinder.FindPotentialWoodlandMansions()));
@@ -141,6 +144,10 @@ public class SeedFinderPipeline {
 		BiomeSearchConfig config = BiomeSearchConfig.getConfig(options.getSpawn_biomes());
 		if (config != null) {
 			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasSpawnBiomes(config)));
+		}
+
+		if (options.getAll_biomes_nearby()) {
+			seeds = seeds.apply(ParDo.of(new BiomeFinder.HasAllBiomesNearby(searchRadius)));
 		}
 
 		seeds.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
