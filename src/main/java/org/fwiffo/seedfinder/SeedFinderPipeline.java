@@ -66,6 +66,11 @@ public class SeedFinderPipeline {
 		String getOutput();
 		void setOutput(String value);
 
+		@Description("Avro format file of precomputed quad witch hut seeds.")
+		@Default.String("")
+		String getInput();
+		void setInput(String value);
+
 		@Description("Lower 48 bits of start seed for search; 0 to 256T. suffixes of " +
 				"K, M, G and T may be used.")
 		@Default.String("0")
@@ -168,12 +173,13 @@ public class SeedFinderPipeline {
 			.apply("VerifyQuadHuts",
 					ParDo.of(new FullSeedFinder.VerifyQuadHuts()))
 			.apply("GroupQuadHuts", GroupByKey.<Long, SeedMetadata>create())
-			.apply("AggregateToSeedFamilies", ParDo.of(new SeedIO.AggregateSeeds()));
+			.apply("AggregateSeedFamilies", ParDo.of(new SeedIO.AggregateSeeds()));
 
 		// Writes the resulting seeds to a binary format, which can be searched
 		// in more detail later.
 		groupedSeeds
-			.apply("WriteSeedsAsAvro", AvroIO.write(SeedFamily.class).to(options.getOutput()));
+			.apply("WriteSeedsAsAvro",
+					AvroIO.write(SeedFamily.class).to(options.getOutput()).withSuffix(".avro"));
 	}
 
 	public static void narrowSearch(
@@ -200,43 +206,51 @@ public class SeedFinderPipeline {
 
 		// Expands to full 64-bit seeds, checks the biomes are present for
 		// witch huts to spawn and gets the world spawn coordinates.
-		PCollection<KV<Long, SeedMetadata>> seeds = potentialSeeds
-			.apply("VerifyQuadHuts", ParDo.of(new FullSeedFinder.VerifyQuadHuts()));
+		PCollection<KV<Long, SeedMetadata>> fullSeeds;
+		if ("".equals(options.getInput())) {
+			fullSeeds = potentialSeeds
+				.apply("VerifyQuadHuts", ParDo.of(new FullSeedFinder.VerifyQuadHuts()));
+		} else {
+			// Deaggregate from the pre-verified seed families.
+			fullSeeds = potentialSeeds
+				.apply("ExtractFullSeeds", ParDo.of(new SeedIO.DeaggregateSeeds()));
+		}
 
 		if (monumentNear > 0) {
-			seeds = seeds
+			fullSeeds = fullSeeds
 				.apply("VerifyOceanMonuments",
 						ParDo.of(new FullSeedFinder.VerifyOceanMonuments()));
 		}
 
 		if (numMansions > 0) {
-			seeds = seeds
+			fullSeeds = fullSeeds
 				.apply("VerifyWoodlandMansions",
 						ParDo.of(new FullSeedFinder.VerifyWoodlandMansions(numMansions)));
 		}
 
 		BiomeSearchConfig config = BiomeSearchConfig.getConfig(options.getSpawn_biomes());
 		if (config != null) {
-			seeds = seeds
+			fullSeeds = fullSeeds
 				.apply("CheckSpawnBiomes", ParDo.of(new FullSeedFinder.HasSpawnBiomes(config)));
 		}
 
 		int searchRadius = options.getSearch_radius();
 		if (options.getAll_biomes_nearby()) {
-			seeds = seeds
+			fullSeeds = fullSeeds
 				.apply("CheckAllBiomesNearby",
 						ParDo.of(new FullSeedFinder.HasAllBiomesNearby(searchRadius)));
 		}
 
 		// Convert seeds to human-readable strings then write them to
 		// plain text files.
-		seeds.apply(ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
-			@ProcessElement
-			public void processElement(ProcessContext c)  {
-				c.output(c.element().getValue().asString());
-			}
-		}))
-		.apply("WriteSeedsAsText", TextIO.write().to(options.getOutput()));
+		fullSeeds
+			.apply("ConvertToText", ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
+				@ProcessElement
+				public void processElement(ProcessContext c) {
+					c.output(c.element().getValue().asString());
+				}
+			}))
+			.apply("WriteSeedsAsText", TextIO.write().to(options.getOutput()));
 	}
 
 	public static void main(String[] args) {
@@ -245,23 +259,47 @@ public class SeedFinderPipeline {
 			PipelineOptionsFactory.fromArgs(args).withValidation().as(SeedFinderOptions.class);
 		Pipeline p = Pipeline.create(options);
 
-		long startSeed = Math.max(parseHuman(options.getStart_seed()), 0);
-		long endSeed = Math.min(parseHuman(options.getEnd_seed()), Constants.MAX_SEED);
-		LOG.info(String.format("Searching seed families from %d to %d...", startSeed, endSeed));
+		// TODO: Fail with a helpful error message for incompatible command line options.
+		//   - Search constraints incompatible with bulk mode
+		//   - Seed range options and timeout incompatible with --input
+		//     (radius still makes some sense; you might want a radius for other
+		//     searches which is different from the quad hut radius).
 
-		// Perform search on lower 48 bits of seed for potential structures.
-		GenerateSequence seeds48bit = GenerateSequence.from(
-				startSeed / Constants.BATCH_SIZE).to(endSeed / Constants.BATCH_SIZE);
-		int maxTime = options.getMax_sequence_time();
-		if (maxTime > 0) {
-			seeds48bit = seeds48bit.withMaxReadTime(Duration.standardMinutes(maxTime));
+		String input = options.getInput();
+		PCollection<KV<Long, SeedFamily>> potentialSeeds;
+		if ("".equals(input)) {
+			// Search a sequence of seeds.
+			long startSeed = Math.max(parseHuman(options.getStart_seed()), 0);
+			long endSeed = Math.min(parseHuman(options.getEnd_seed()), Constants.MAX_SEED);
+			LOG.info(String.format("Searching seed families from %d to %d...", startSeed, endSeed));
+
+			// Perform search on lower 48 bits of seed for potential structures.
+			GenerateSequence seeds48bit = GenerateSequence.from(
+					startSeed / Constants.BATCH_SIZE).to(endSeed / Constants.BATCH_SIZE);
+			int maxTime = options.getMax_sequence_time();
+			if (maxTime > 0) {
+				seeds48bit = seeds48bit.withMaxReadTime(Duration.standardMinutes(maxTime));
+			}
+
+			int searchRadius = options.getSearch_radius();
+			potentialSeeds = p
+				.apply("Generate48BitSeeds", seeds48bit)
+				.apply("PotentialQuadHuts",
+						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(searchRadius)));
+
+		} else {
+			// Start with precomputed quad witch hut seeds.
+			LOG.info(String.format("Reading precomputed seeds from \"%s\"...", input));
+			potentialSeeds = p
+				.apply("ReadPrecomputedSeeds", AvroIO.read(SeedFamily.class).from(input))
+				.apply("AddKeys", ParDo.of(new DoFn<SeedFamily, KV<Long, SeedFamily>>() {
+					@ProcessElement
+					public void ProcessElement(ProcessContext c) {
+						SeedFamily family = c.element();
+						c.output(KV.of(family.baseSeed, family));
+					}
+				}));
 		}
-
-		int searchRadius = options.getSearch_radius();
-		PCollection<KV<Long, SeedFamily>> potentialSeeds = p
-			.apply("Generate48BitSeeds", seeds48bit)
-			.apply("PotentialQuadHuts",
-					ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(searchRadius)));
 
 		if (options.getBulk_search_mode()) {
 			bulkSearch(potentialSeeds, options);

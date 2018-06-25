@@ -1,3 +1,4 @@
-target
-output
 credentials.json
+output
+precomputed
+target

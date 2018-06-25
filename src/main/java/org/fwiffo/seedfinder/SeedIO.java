@@ -13,9 +13,9 @@ import org.fwiffo.seedfinder.types.SeedFamily;
 import org.fwiffo.seedfinder.types.SeedMetadata;
 
 public class SeedIO {
-	// TODO: Functionality for ungrouping seed families read from a file.
 	
-	public static class AggregateSeeds extends DoFn<KV<Long, Iterable<SeedMetadata>>, SeedFamily> {
+	public static class AggregateSeeds
+			extends DoFn<KV<Long, Iterable<SeedMetadata>>, SeedFamily> {
 		private final Counter countFamilies = Metrics.counter(
 				AggregateSeeds.class, "seed-families-aggregated");
 
@@ -34,6 +34,25 @@ public class SeedIO {
 			Location[] huts = allSeeds.iterator().next().huts;
 			c.output(new SeedFamily(baseSeed, fullSeeds, huts));
 			countFamilies.inc();
+		}
+	}
+
+	public static class DeaggregateSeeds
+			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
+		private final Counter countInput = Metrics.counter(
+				DeaggregateSeeds.class, "seed-families-deaggregated");
+		private final Counter countExtracted = Metrics.counter(
+				DeaggregateSeeds.class, "full-seeds-extracted");
+
+		@ProcessElement
+		public void processElement(ProcessContext c)  {
+			SeedFamily family = c.element().getValue();
+			for (Long fullSeed : family.fullSeeds.keySet()) {
+				SeedMetadata seed = family.expanded(fullSeed, family.fullSeeds.get(fullSeed));
+				c.output(KV.of(family.baseSeed, seed));
+				countExtracted.inc();
+			}
+			countInput.inc();
 		}
 	}
 }
