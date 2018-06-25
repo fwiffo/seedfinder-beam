@@ -67,6 +67,7 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>${maven-exec-plugin.version}</version>
           <configuration>
+            <mainClass>org.fwiffo.seedfinder.SeedFinderPipeline</mainClass>
             <cleanupDaemonThreads>false</cleanupDaemonThreads>
           </configuration>
         </plugin>

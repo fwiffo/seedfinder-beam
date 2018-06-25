@@ -66,25 +66,27 @@ public class SeedFinderPipeline {
 		String getOutput();
 		void setOutput(String value);
 
-		@Description("Lower 48 bits of start seed for search; 0 to 256T. " +
-				"suffixes of K, M, G and T may be used.")
+		@Description("Lower 48 bits of start seed for search; 0 to 256T. suffixes of " +
+				"K, M, G and T may be used.")
 		@Default.String("0")
 		String getStart_seed();
 		void setStart_seed(String value);
 
-		@Description("Lower 48 bits of end seed for search; 0 to 256T. " +
-				"suffixes of K, M, G and T may be used.")
+		@Description("Lower 48 bits of end seed for search; 0 to 256T. suffixes of " +
+				"K, M, G and T may be used.")
 		@Default.String("1G")
 		String getEnd_seed();
 		void setEnd_seed(String value);
 
-		@Description("Maximum time for generating candidate seeds in minutes.")
+		@Description("Maximum time for generating candidate seeds, in minutes.")
 		@Default.Integer(0)
 		int getMax_sequence_time();
 		void setMax_sequence_time(int value);
 
-		@Description("Radius to search for structures and biomes, in blocks; " +
-				"structures will round up to an integer number of regions.")
+		@Description("Radius to search for structures and biomes, in blocks; structures will " +
+				"round up to an integer number of regions. For example, 2048 blocks will be " +
+				"exact for witch huts, and ocean monuments which have 32 chunk regions, but will " +
+				"round up to 2560 for woodland mansions, which have 80 chunk regions.")
 		@Default.Integer(2048)
 		int getSearch_radius();
 		void setSearch_radius(int value);
@@ -110,8 +112,7 @@ public class SeedFinderPipeline {
 		void setWoodland_mansions(int value);
 
 		// TODO: Maybe add more options.
-		@Description("Search for seeds with specific biomes at spawn; options of " +
-				"flower_forest, ice_spikes, jungle, mega_taiga, mesa, mushroom_island, ocean.")
+		@Description("Search for seeds with specific biomes at spawn")
 		@Default.Enum("none")
 		BiomeSearchConfig.Name getSpawn_biomes();
 		void setSpawn_biomes(BiomeSearchConfig.Name value);
