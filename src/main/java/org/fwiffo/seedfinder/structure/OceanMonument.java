@@ -3,7 +3,7 @@ package org.fwiffo.seedfinder.structure;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.fwiffo.seedfinder.biome.*;
-import org.fwiffo.seedfinder.util.Location;
+import org.fwiffo.seedfinder.types.Location;
 
 public class OceanMonument extends SizedStructure {
 	private static final int innerSize = 16;

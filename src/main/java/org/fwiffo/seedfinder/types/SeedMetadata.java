@@ -1,10 +1,11 @@
-package org.fwiffo.seedfinder.util;
+package org.fwiffo.seedfinder.types;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 
+// TODO: Get @Nullable to work
 @DefaultCoder(AvroCoder.class)
 public class SeedMetadata implements Serializable {
 	// These will get populated with empty/dummy values if not present

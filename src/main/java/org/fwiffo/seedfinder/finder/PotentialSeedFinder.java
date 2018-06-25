@@ -15,8 +15,8 @@ import org.fwiffo.seedfinder.finder.SeedFinder;
 import org.fwiffo.seedfinder.structure.OceanMonument;
 import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
-import org.fwiffo.seedfinder.util.Location;
-import org.fwiffo.seedfinder.util.SeedFamily;
+import org.fwiffo.seedfinder.types.Location;
+import org.fwiffo.seedfinder.types.SeedFamily;
 
 public class PotentialSeedFinder extends SeedFinder {
 	private static final Logger LOG = LoggerFactory.getLogger(PotentialSeedFinder.class);

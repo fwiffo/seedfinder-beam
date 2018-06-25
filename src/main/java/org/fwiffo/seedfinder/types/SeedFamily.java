@@ -1,29 +1,32 @@
-package org.fwiffo.seedfinder.util;
+package org.fwiffo.seedfinder.types;
 
 import java.io.Serializable;
+import java.util.Hashtable;
+
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 
-import org.fwiffo.seedfinder.util.SeedMetadata;
+import org.fwiffo.seedfinder.types.SeedMetadata;
 
+// TODO: Get @Nullable to work
 @DefaultCoder(AvroCoder.class)
 public class SeedFamily implements Serializable {
 	public final long baseSeed;
-	public final long[] fullSeeds;
+	public final Hashtable<Long, Location> fullSeeds;
 	public final Location[] huts;
 	public final Location[] mansions;
 	public final Location[] monuments;
 
 	public SeedFamily() {
 		this.baseSeed = 0;
-		this.fullSeeds = new long[0];
+		this.fullSeeds = new Hashtable<Long, Location>();
 		this.huts = new Location[0];
 		this.mansions = new Location[0];
 		this.monuments = new Location[0];
 	}
 
 	public SeedFamily(
-			long baseSeed, long fullSeeds[],
+			long baseSeed, Hashtable<Long, Location> fullSeeds,
 			Location[] huts, Location[] mansions, Location[] monuments) {
 		this.baseSeed = baseSeed;
 		this.fullSeeds = fullSeeds;
@@ -36,7 +39,7 @@ public class SeedFamily implements Serializable {
 			long baseSeed,
 			Location[] huts, Location[] mansions, Location[] monuments) {
 		this.baseSeed = baseSeed;
-		this.fullSeeds = new long[0];
+		this.fullSeeds = new Hashtable<Long, Location>();
 		this.huts = huts;
 		this.mansions = mansions;
 		this.monuments = monuments;
@@ -44,7 +47,15 @@ public class SeedFamily implements Serializable {
 
 	public SeedFamily(long baseSeed, Location[] huts) {
 		this.baseSeed = baseSeed;
-		this.fullSeeds = new long[0];
+		this.fullSeeds = new Hashtable<Long, Location>();
+		this.huts = huts;
+		this.mansions = new Location[0];
+		this.monuments = new Location[0];
+	}
+
+	public SeedFamily(long baseSeed, Hashtable<Long, Location> fullSeeds, Location[] huts) {
+		this.baseSeed = baseSeed;
+		this.fullSeeds = fullSeeds;
 		this.huts = huts;
 		this.mansions = new Location[0];
 		this.monuments = new Location[0];

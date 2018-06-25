@@ -1,4 +1,4 @@
-package org.fwiffo.seedfinder.util;
+package org.fwiffo.seedfinder.types;
 
 import java.io.*;
 import org.apache.beam.sdk.coders.AvroCoder;

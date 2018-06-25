@@ -3,7 +3,7 @@ package org.fwiffo.seedfinder.structure;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.fwiffo.seedfinder.biome.*;
-import org.fwiffo.seedfinder.util.Location;
+import org.fwiffo.seedfinder.types.Location;
 
 abstract public class SizedStructure extends Structure {
 	private final int structureSize;

@@ -18,9 +18,9 @@ import org.fwiffo.seedfinder.finder.SeedFinder;
 import org.fwiffo.seedfinder.structure.OceanMonument;
 import org.fwiffo.seedfinder.structure.WitchHut;
 import org.fwiffo.seedfinder.structure.WoodlandMansion;
-import org.fwiffo.seedfinder.util.Location;
-import org.fwiffo.seedfinder.util.SeedFamily;
-import org.fwiffo.seedfinder.util.SeedMetadata;
+import org.fwiffo.seedfinder.types.Location;
+import org.fwiffo.seedfinder.types.SeedFamily;
+import org.fwiffo.seedfinder.types.SeedMetadata;
 
 public class FullSeedFinder extends SeedFinder {
 	private static final ArrayList<Biome> VALID_SPAWN_BIOMES = new ArrayList<Biome>(
@@ -202,6 +202,7 @@ public class FullSeedFinder extends SeedFinder {
 
 	public static class HasAllBiomesNearby extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
+		// Other biome types are common everywhere, so don't need to be included.
 		private static final int[][] CHECKED_BIOMES = new int[][]{
 			BiomeSearchConfig.FLOWER_FOREST.includeBiomes,
 			BiomeSearchConfig.ICE_SPIKES.includeBiomes,
