@@ -96,6 +96,8 @@ public class FullSeedFinder extends SeedFinder {
 	public static class VerifyOceanMonuments
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
+		private final Counter countSeedsChecked = Metrics.counter(
+				VerifyOceanMonuments.class, "monument-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
 				VerifyOceanMonuments.class, "monument-full-seeds-verified");
 
@@ -105,6 +107,7 @@ public class FullSeedFinder extends SeedFinder {
 			SeedMetadata seed = c.element().getValue();
 			BiomeGenerator generator = new BiomeGenerator(seed.seed);
 
+			countSeedsChecked.inc();
 			for (Location location : seed.monuments) {
 				if (monument.structureWillSpawn(location, generator)) {
 					c.output(c.element());
@@ -118,6 +121,8 @@ public class FullSeedFinder extends SeedFinder {
 	public static class VerifyWoodlandMansions
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
+		private final Counter countSeedsChecked = Metrics.counter(
+				VerifyOceanMonuments.class, "woodland-mansion-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
 				VerifyWoodlandMansions.class, "woodland-mansion-full-seeds-verified");
 
@@ -146,6 +151,7 @@ public class FullSeedFinder extends SeedFinder {
 			// TODO: Rather than return early, maybe we want to display
 			// the mansion locations. If so, we'll need to update it with
 			// the verified ones.
+			countSeedsChecked.inc();
 			for (Location location : seed.mansions) {
 				if (mansion.structureWillSpawn(location, generator)) {
 					mansionCount++;
@@ -179,6 +185,8 @@ public class FullSeedFinder extends SeedFinder {
 
 	public static class HasSpawnBiomes extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
+		private final Counter countSeedsChecked = Metrics.counter(
+				HasSpawnBiomes.class, "spawn-biomes-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
 				HasSpawnBiomes.class, "spawn-biomes-full-seeds-verified");
 
@@ -197,6 +205,7 @@ public class FullSeedFinder extends SeedFinder {
 				c.output(c.element());
 				countSeedsFound.inc();
 			}
+			countSeedsChecked.inc();
 		}
 	}
 
@@ -212,6 +221,8 @@ public class FullSeedFinder extends SeedFinder {
 			BiomeSearchConfig.MUSHROOM_ISLAND.includeBiomes,
 		};
 
+		private final Counter countSeedsChecked = Metrics.counter(
+				HasAllBiomesNearby.class, "all-biomes-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
 				HasAllBiomesNearby.class, "all-biomes-full-seeds-verified");
 		private final int radius;
@@ -248,6 +259,7 @@ public class FullSeedFinder extends SeedFinder {
 				c.output(c.element());
 				countSeedsFound.inc();
 			}
+			countSeedsChecked.inc();
 		}
 	}
 }

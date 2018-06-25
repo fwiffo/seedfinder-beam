@@ -42,6 +42,9 @@ fine though.
     Default: 1G
     Lower 48 bits of end seed for search; 0 to 256T. suffixes of K, M, G and T
     may be used.
+  --input=<String>
+    Default:
+    Avro format file of precomputed quad witch hut seeds.
   --max_sequence_time=<int>
     Default: 0
     Maximum time for generating candidate seeds, in minutes.
@@ -56,10 +59,12 @@ fine though.
   --search_radius=<int>
     Default: 2048
     Radius to search for structures and biomes, in blocks; structures will round
-    up to an integer number of regions.
+    up to an integer number of regions. For example, 2048 blocks will be exact
+    for witch huts, and ocean monuments which have 32 chunk regions, but will
+    round up to 2560 for woodland mansions, which have 80 chunk regions.
   --spawn_biomes=<none | flower_forest | ice_spikes | jungle | mega_taiga | mesa | mushroom_island | ocean>
     Default: none
-    Search for seeds with specific biomes at spawn.
+    Search for seeds with specific biomes at spawn
   --start_seed=<String>
     Default: 0
     Lower 48 bits of start seed for search; 0 to 256T. suffixes of K, M, G and T
@@ -96,9 +101,12 @@ GOOGLE_APPLICATION_CREDENTIALS='credentials.json' mvn compile exec:java \
     -Dexec.args="
     --project=[your cloud dataflow project] \
     --stagingLocation=[your cloud storage staging bucket] \
+    --gcpTempLocation=[your cloud storage temp location] \
     --region=us-west1 (or whatever your favorite region is) \
+    --numWorkers=[some number if you want to pre-scale the number of workers] \
     --runner=DataflowRunner \
     --jobName=minecraft-seed-finder \
+    --input=[precomputed path if you have one] \
     --output=[your cloud storage output bucket] \
     --start_seed=0 --end_seed=4G \
     ... (other options below) ..."
@@ -116,7 +124,10 @@ enormous numbers of non-quad seeds, and verifying that all four huts will spawn.
 
 This mode ignores search parameters other than seed range, radius and timeout.
 
-You can load it later with the --input flag (still to be added).
+You can load it later with the --input flag. Using the --input flag will ignore
+the search radius, seed range and timeout instead reading verified quad hut
+seeds from the provided Avro file. Seeds can be further narrowed down with any
+of the other search parameters.
 
 ## Note on Minecraft versions
 
