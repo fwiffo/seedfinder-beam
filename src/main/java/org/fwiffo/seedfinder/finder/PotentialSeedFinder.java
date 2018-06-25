@@ -29,7 +29,7 @@ public class PotentialSeedFinder extends SeedFinder {
 		private final Counter countSeedsChecked = Metrics.counter(
 				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-checked");
 		private final Counter countPotentialFound = Metrics.counter(
-				HasPotentialQuadHuts.class, "quad-huts-48bit-potenial-seeds-found");
+				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-with-potential-found");
 
 		// Radius to search, in regions. User specifies as blocks, and it's
 		// rounded up to the nearest region.
@@ -124,7 +124,7 @@ public class PotentialSeedFinder extends SeedFinder {
 		private final int minEdge;
 		private final int maxEdge;
 		private final Counter countPotentialFound = Metrics.counter(
-				HasPotentialOceanMonuments.class, "monument-48bit-potenial-seeds-found");
+				HasPotentialOceanMonuments.class, "monument-48bit-seeds-with-potential-found");
 
 		public HasPotentialOceanMonuments(int closeness) {
 			this.closeness = closeness;
