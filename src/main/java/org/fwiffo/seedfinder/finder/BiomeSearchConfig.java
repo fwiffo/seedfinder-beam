@@ -7,47 +7,57 @@ import org.fwiffo.seedfinder.biome.Biome;
 public class BiomeSearchConfig implements Serializable  {
 
 	public static final BiomeSearchConfig FLOWER_FOREST = new BiomeSearchConfig(
-			0.3f,
+			0.65f,
 			new Biome[]{Biome.flowerForest},
-			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+			new Biome[]{
+				Biome.river, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig ICE_SPIKES = new BiomeSearchConfig(
-			0.5f,
+			0.75f,
 			new Biome[]{Biome.icePlainsSpikes},
 			new Biome[]{
-				Biome.icePlains, Biome.iceMountains,
-				Biome.frozenOcean, Biome.frozenRiver, Biome.frozenOceanM, Biome.frozenRiverM,
-				Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+				Biome.icePlains, Biome.iceMountains, Biome.frozenRiver, Biome.frozenRiverM,
+				Biome.river, Biome.frozenOcean, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.frozenOceanM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig JUNGLE = new BiomeSearchConfig(
-			0.8f,
+			0.95f,
 			new Biome[]{
 				Biome.jungle, Biome.jungleHills, Biome.jungleEdge},
-			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+			new Biome[]{
+				Biome.river, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig MEGA_TAIGA = new BiomeSearchConfig(
-			0.8f,
+			0.90f,
 			new Biome[]{
 				Biome.megaTaiga, Biome.megaTaigaHills,
 				Biome.megaSpruceTaiga, Biome.megaSpurceTaigaHills},
-			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+			new Biome[]{
+				Biome.river, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig MESA = new BiomeSearchConfig(
-			0.8f,
+			0.90f,
 			new Biome[]{
 				Biome.mesa, Biome.mesaPlateauF, Biome.mesaPlateau,
 				Biome.mesaBryce, Biome.mesaPlateauFM, Biome.mesaPlateauM},
-			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+			new Biome[]{
+				Biome.river, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig MUSHROOM_ISLAND = new BiomeSearchConfig(
-			0.5f,
+			0.50f,
 			new Biome[]{
 				Biome.mushroomIsland, Biome.mushroomIslandShore,
 				Biome.mushroomIslandM, Biome.mushroomIslandShoreM},
-			new Biome[]{Biome.ocean, Biome.deepOcean, Biome.oceanM, Biome.deepOceanM});
+			new Biome[]{
+				Biome.river, Biome.ocean, Biome.deepOcean,
+				Biome.riverM, Biome.oceanM, Biome.deepOceanM});
 
 	public static final BiomeSearchConfig OCEAN = new BiomeSearchConfig(
-			0.8f,
+			0.80f,
 			new Biome[]{
 				Biome.ocean, Biome.frozenOcean, Biome.deepOcean,
 				Biome.oceanM, Biome.frozenOceanM, Biome.deepOceanM});
