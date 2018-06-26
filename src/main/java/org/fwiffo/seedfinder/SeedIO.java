@@ -37,6 +37,29 @@ public class SeedIO {
 		}
 	}
 
+	public static class AddKeys extends DoFn<SeedFamily, KV<Long, SeedFamily>> {
+		private final Counter countInput = Metrics.counter(
+				AddKeys.class, "precomputed-seed-families-read");
+		private final boolean emulateBug;
+
+		public AddKeys() {
+			this.emulateBug = false;
+		}
+
+		public AddKeys(boolean emulateBug) {
+			this.emulateBug = emulateBug;
+		}
+
+		@ProcessElement
+		public void ProcessElement(ProcessContext c) {
+			SeedFamily family = c.element();
+			if (!emulateBug || family.huts[3].x >= 0 && family.huts[3].z >= 0) {
+				c.output(KV.of(family.baseSeed, family));
+				countInput.inc();
+			}
+		}
+	}
+
 	public static class DeaggregateSeeds
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 		private final Counter countInput = Metrics.counter(

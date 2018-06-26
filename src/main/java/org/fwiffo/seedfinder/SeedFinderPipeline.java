@@ -299,15 +299,7 @@ public class SeedFinderPipeline {
 			LOG.info(String.format("Reading precomputed seeds from \"%s\"...", input));
 			potentialSeeds = p
 				.apply("ReadPrecomputedSeeds", AvroIO.read(SeedFamily.class).from(input))
-				.apply("AddKeys", ParDo.of(new DoFn<SeedFamily, KV<Long, SeedFamily>>() {
-					@ProcessElement
-					public void ProcessElement(ProcessContext c) {
-						SeedFamily family = c.element();
-						if (!emulateBug || family.huts[3].x >= 0 && family.huts[3].z >= 0) {
-							c.output(KV.of(family.baseSeed, family));
-						}
-					}
-				}));
+				.apply("AddKeys", ParDo.of(new SeedIO.AddKeys(emulateBug)));
 		}
 
 		if (options.getBulk_search_mode()) {
