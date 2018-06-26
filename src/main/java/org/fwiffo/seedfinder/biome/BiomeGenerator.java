@@ -12,15 +12,13 @@ public class BiomeGenerator {
 	}
 
 	public void setSeed(long seed) {
-		// TODO: Maybe we can increase performance by only creating one
-		// generator with threadLocals and only resetting the cache if
-		// the seed changes? I don't understand the biome internals.
 		IntCache.resetIntCache();
 		biomeIndexLayer = GenLayer.func_180781_a(seed, null)[1];
 		biomeIndexLayerQuarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
 	}
 
 	public int getBiomeAt(int x, int z) {
+		IntCache.resetIntCache();
 		return biomeIndexLayer.getInts(x, z, 1, 1)[0];
 	}
 
@@ -29,10 +27,12 @@ public class BiomeGenerator {
 	}
 
 	public int[] getFullResolutionBiomeData(int x, int y, int width, int height) {
+		IntCache.resetIntCache();
 		return biomeIndexLayer.getInts(x, y, width, height);
 	}
 
 	public int[] getQuarterResolutionBiomeData(int x, int y, int width, int height) {
+		IntCache.resetIntCache();
 		return biomeIndexLayerQuarter.getInts(x, y, width, height);
 	}
 
