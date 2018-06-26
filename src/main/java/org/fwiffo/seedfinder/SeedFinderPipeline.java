@@ -303,10 +303,9 @@ public class SeedFinderPipeline {
 					@ProcessElement
 					public void ProcessElement(ProcessContext c) {
 						SeedFamily family = c.element();
-						if (emulateBug && (family.huts[3].x < 0 || family.huts[3].z < 0)) {
-							return;
+						if (!emulateBug || family.huts[3].x >= 0 && family.huts[3].z >= 0) {
+							c.output(KV.of(family.baseSeed, family));
 						}
-						c.output(KV.of(family.baseSeed, family));
 					}
 				}));
 		}

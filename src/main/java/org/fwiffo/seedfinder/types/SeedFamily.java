@@ -35,16 +35,6 @@ public class SeedFamily implements Serializable {
 		this.monuments = monuments;
 	}
 
-	public SeedFamily(
-			long baseSeed,
-			Location[] huts, Location[] mansions, Location[] monuments) {
-		this.baseSeed = baseSeed;
-		this.fullSeeds = new Hashtable<Long, Location>();
-		this.huts = huts;
-		this.mansions = mansions;
-		this.monuments = monuments;
-	}
-
 	public SeedFamily(long baseSeed, Location[] huts) {
 		this.baseSeed = baseSeed;
 		this.fullSeeds = new Hashtable<Long, Location>();
@@ -62,11 +52,11 @@ public class SeedFamily implements Serializable {
 	}
 
 	public SeedFamily withMansions(Location[] mansions) {
-		return new SeedFamily(baseSeed, huts, mansions, monuments);
+		return new SeedFamily(baseSeed, fullSeeds, huts, mansions, monuments);
 	}
 
 	public SeedFamily withMonuments(Location[] monuments) {
-		return new SeedFamily(baseSeed, huts, mansions, monuments);
+		return new SeedFamily(baseSeed, fullSeeds, huts, mansions, monuments);
 	}
 
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
