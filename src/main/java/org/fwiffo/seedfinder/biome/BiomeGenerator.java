@@ -12,7 +12,6 @@ public class BiomeGenerator {
 	}
 
 	public void setSeed(long seed) {
-		IntCache.resetIntCache();
 		biomeIndexLayer = GenLayer.func_180781_a(seed, null)[1];
 		biomeIndexLayerQuarter = GenLayer.func_180781_a(seed, "")[0]; // 1:4 fourth resolution less calculations
 	}
