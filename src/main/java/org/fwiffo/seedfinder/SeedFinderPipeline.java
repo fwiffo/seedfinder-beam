@@ -164,7 +164,7 @@ public class SeedFinderPipeline {
 		ArrayList<String> formatted = new ArrayList<String>();
 		formatted.add("\nCounters:");
 		for (String key : counters.keySet()) {
-			formatted.add(String.format("%40s: %d", key, counters.get(key)));
+			formatted.add(String.format("%45s: %d", key, counters.get(key)));
 		}
 		LOG.info(String.join("\n", formatted));
 	}
@@ -195,7 +195,7 @@ public class SeedFinderPipeline {
 		int monumentNear = options.getOcean_monument_near_huts();
 		if (monumentNear > 0) {
 			potentialSeeds = potentialSeeds
-				.apply("PotentialOceanMonuments",
+				.apply("FindPotentialOceanMonuments",
 						ParDo.of(new PotentialSeedFinder.HasPotentialOceanMonuments(monumentNear)));
 		}
 
@@ -206,7 +206,7 @@ public class SeedFinderPipeline {
 		int searchRadius = options.getSearch_radius();
 		if (numMansions > 0) {
 			potentialSeeds = potentialSeeds
-				.apply("PotentialWoodlandMansions",
+				.apply("FindPotentialWoodlandMansions",
 						ParDo.of(new PotentialSeedFinder.FindPotentialWoodlandMansions(searchRadius)));
 		}
 
@@ -290,12 +290,17 @@ public class SeedFinderPipeline {
 			int searchRadius = options.getSearch_radius();
 			potentialSeeds = p
 				.apply("Generate48BitSeeds", seeds48bit)
-				.apply("PotentialQuadHuts",
+				.apply("FindPotentialQuadHuts",
 						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(
 								searchRadius, emulateBug)));
 
 		} else {
 			// Start with precomputed quad witch hut seeds.
+			// TODO: Wildcard support is poopy (e.g. can't support foo/*/bar-*)
+			// but it does have a readAll which takes a PCollection of filenames
+			// as input, so we could list filenames in a file, or expand
+			// wildcards better ourselves, or allow a comma-separated list on
+			// the command line.
 			LOG.info(String.format("Reading precomputed seeds from \"%s\"...", input));
 			potentialSeeds = p
 				.apply("ReadPrecomputedSeeds", AvroIO.read(SeedFamily.class).from(input))

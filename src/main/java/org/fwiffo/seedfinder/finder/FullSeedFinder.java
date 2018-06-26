@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.Random;
 
 import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
@@ -64,6 +65,8 @@ public class FullSeedFinder extends SeedFinder {
 				VerifyQuadHuts.class, "quad-huts-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
 				VerifyQuadHuts.class, "quad-huts-full-seeds-verified");
+		private final Distribution verifiedPerFamily = Metrics.distribution(
+				VerifyQuadHuts.class, "quad-huts-verified-per-family");
 
 		private static boolean allHutsWillSpawn(
 				BiomeGenerator generator, WitchHut hut, Location[] huts) {
@@ -80,16 +83,19 @@ public class FullSeedFinder extends SeedFinder {
 			WitchHut hut = threadWitchHut.get();
 			SeedFamily family = c.element().getValue();
 
+			int count = 0;
 			for (long high=0; high<1<<16; high++) {
 				long fullSeed = (high<<48) ^ family.baseSeed;
 				BiomeGenerator generator = new BiomeGenerator(fullSeed);
 				if (allHutsWillSpawn(generator, hut, family.huts)) {
 					Location spawn = locateSpawn(fullSeed, generator);
 					c.output(KV.of(family.baseSeed, family.expanded(fullSeed, spawn)));
-					countSeedsFound.inc();
+					count++;
 				}
 			}
 			countSeedsChecked.inc(1<<16);
+			countSeedsFound.inc(count);
+			verifiedPerFamily.update(count);
 		}
 	}
 

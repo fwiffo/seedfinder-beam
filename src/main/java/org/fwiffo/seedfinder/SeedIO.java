@@ -40,6 +40,8 @@ public class SeedIO {
 	public static class AddKeys extends DoFn<SeedFamily, KV<Long, SeedFamily>> {
 		private final Counter countInput = Metrics.counter(
 				AddKeys.class, "precomputed-seed-families-read");
+		private final Counter countFull = Metrics.counter(
+				AddKeys.class, "precomputed-seed-full-seeds-read");
 		private final boolean emulateBug;
 
 		public AddKeys() {
@@ -55,7 +57,7 @@ public class SeedIO {
 			SeedFamily family = c.element();
 			if (!emulateBug || family.huts[3].x >= 0 && family.huts[3].z >= 0) {
 				c.output(KV.of(family.baseSeed, family));
-				countInput.inc();
+				countInput.inc(family.fullSeeds.size());
 			}
 		}
 	}
@@ -63,7 +65,7 @@ public class SeedIO {
 	public static class DeaggregateSeeds
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 		private final Counter countInput = Metrics.counter(
-				DeaggregateSeeds.class, "seed-families-deaggregated");
+				DeaggregateSeeds.class, "searched-seed-families-deaggregated");
 		private final Counter countExtracted = Metrics.counter(
 				DeaggregateSeeds.class, "full-seeds-extracted");
 
