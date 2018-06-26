@@ -6,7 +6,7 @@ GOOGLE_APPLICATION_CREDENTIALS='credentials.json' time mvn compile exec:java \
     --region=us-west1 \
     --numWorkers=40 \
     --runner=DataflowRunner \
-    --jobName=minecraft-seed-finder-bulk-10-100G \
-    --output=gs://seed-finder/precomputed/10-100G/seeds \
+    --jobName=minecraft-seed-finder-bulk-0-200G \
+    --output=gs://seed-finder/precomputed/0-200G/seeds \
     --bulk_search_mode \
-    --start_seed=10G --end_seed=100G"
+    --start_seed=0G --end_seed=200G"

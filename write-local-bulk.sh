@@ -1,6 +1,6 @@
 #!/bin/bash
 time mvn compile exec:java \
     -Dexec.args=" \
-    --output=./precomputed/seeds \
-    --start_seed=0 --end_seed=10G \
+    --output=./precomputed/25-50G/seeds \
+    --start_seed=25G --end_seed=50G \
     --bulk_search_mode"
