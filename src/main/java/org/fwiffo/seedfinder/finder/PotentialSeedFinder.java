@@ -185,7 +185,7 @@ public class PotentialSeedFinder extends SeedFinder {
 		private final int radius;
 
 		public FindPotentialWoodlandMansions() {
-			this.radius = 3;
+			this.radius = 2;
 		}
 
 		public FindPotentialWoodlandMansions(int radiusBlocks) {

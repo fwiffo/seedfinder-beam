@@ -203,10 +203,11 @@ public class SeedFinderPipeline {
 		// There are no restrictions on the mansion locations, so all seed
 		// families will have many.
 		int numMansions = options.getWoodland_mansions();
+		int searchRadius = options.getSearch_radius();
 		if (numMansions > 0) {
 			potentialSeeds = potentialSeeds
 				.apply("PotentialWoodlandMansions",
-						ParDo.of(new PotentialSeedFinder.FindPotentialWoodlandMansions()));
+						ParDo.of(new PotentialSeedFinder.FindPotentialWoodlandMansions(searchRadius)));
 		}
 
 		// Expands to full 64-bit seeds, checks the biomes are present for
@@ -239,7 +240,6 @@ public class SeedFinderPipeline {
 				.apply("CheckSpawnBiomes", ParDo.of(new FullSeedFinder.HasSpawnBiomes(config)));
 		}
 
-		int searchRadius = options.getSearch_radius();
 		if (options.getAll_biomes_nearby()) {
 			fullSeeds = fullSeeds
 				.apply("CheckAllBiomesNearby",
