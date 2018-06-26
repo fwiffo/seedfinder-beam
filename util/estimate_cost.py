@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+"""Estimates job cost based on Dataflow pricing on 6/2018."""
+
 import sys
 
 VCPU_HR = 0.056
@@ -17,6 +19,7 @@ def cost_estimate(vcpu, memory, storage, ssd=0, data=0):
 
 
 def main(argv):
+    print("Usage: estimate_cost.py vCPU-hr Mem-GB-hr PD-GB-hr")
     print("$%.2f" % cost_estimate(*(float(a) for a in argv)))
 
 
