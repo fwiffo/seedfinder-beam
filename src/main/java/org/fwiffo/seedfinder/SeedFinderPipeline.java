@@ -127,6 +127,11 @@ public class SeedFinderPipeline {
 		boolean getAll_biomes_nearby();
 		void setAll_biomes_nearby(boolean value);
 
+		@Description("Emulate the 1.13 snapshot coordinate bug, MC-131462.")
+		@Default.Boolean(false)
+		boolean getEmulate_MC_131462();
+		void setEmulate_MC_131462(boolean value);
+
 		// TODO: Lots of a specific biome nearby; e.g. lots of mushroom islands.
 		// TODO: Stronghold close to quad huts. Stronghold location search
 		// requires full seed.
@@ -266,6 +271,7 @@ public class SeedFinderPipeline {
 		//     searches which is different from the quad hut radius).
 
 		String input = options.getInput();
+		boolean emulateBug = options.getEmulate_MC_131462();
 		PCollection<KV<Long, SeedFamily>> potentialSeeds;
 		if ("".equals(input)) {
 			// Search a sequence of seeds.
@@ -285,7 +291,8 @@ public class SeedFinderPipeline {
 			potentialSeeds = p
 				.apply("Generate48BitSeeds", seeds48bit)
 				.apply("PotentialQuadHuts",
-						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(searchRadius)));
+						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(
+								searchRadius, emulateBug)));
 
 		} else {
 			// Start with precomputed quad witch hut seeds.
@@ -296,6 +303,9 @@ public class SeedFinderPipeline {
 					@ProcessElement
 					public void ProcessElement(ProcessContext c) {
 						SeedFamily family = c.element();
+						if (emulateBug && (family.huts[3].x < 0 || family.huts[3].z < 0)) {
+							return;
+						}
 						c.output(KV.of(family.baseSeed, family));
 					}
 				}));

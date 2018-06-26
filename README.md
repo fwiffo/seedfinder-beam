@@ -4,11 +4,11 @@ Minecraft seedfinder written for Apache Beam, so you can throw lots of compute
 at it to find comprehensive lists of seeds or seek out very rare seeds.
 
 This is based on work by L64 who developed the fast method of finding quad huts
-(and other structures) using just the lower 48 bits of the seed. Watch (his
-video)[https://www.youtube.com/watch?v=97OdqeiUfHw] explaining the principle.
+(and other structures) using just the lower 48 bits of the seed. Watch [his
+video](https://www.youtube.com/watch?v=97OdqeiUfHw) explaining the principle.
 
 The biome-related code in this project came from there. The original can be
-found in (egut's github repository)[https://github.com/egut/SciCraftSeedFinder].
+found in [egut's github repository](https://github.com/egut/SciCraftSeedFinder).
 
 ## Verifying the output
 
@@ -124,10 +124,10 @@ enormous numbers of non-quad seeds, and verifying that all four huts will spawn.
 
 This mode ignores search parameters other than seed range, radius and timeout.
 
-You can load it later with the --input flag. Using the --input flag will ignore
-the search radius, seed range and timeout instead reading verified quad hut
-seeds from the provided Avro file. Seeds can be further narrowed down with any
-of the other search parameters.
+You can load it later with the `--input` flag. Using the `--input` flag will
+ignore the search radius (for witch huts only), seed range and timeout. Instead,
+it will read verified quad hut seeds from the provided Avro file. Seeds can be
+further narrowed down with any of the other search parameters.
 
 ## Note on Minecraft versions
 
@@ -136,14 +136,15 @@ There is a "magic" seed for seeding the RNG for structure generation; in
 previous versions it was 14357617 (and remains that for desert temples), but was
 changed to 14357620 for witch huts for 1.13.
 
-A new bug in 1.13, MC-131462, prevents some structures from generated in
-negative coordinates. In the case of quad witch huts, some of the huts won't
-generate unless the south-east hut has non-negative coordinates for both X and
-Z. This makes quad seeds four times as rare, but the seedfinder isn't slower
-because it can just search the positive coordinates.
+A bug in 1.13 snapshots, [MC-131462](https://bugs.mojang.com/browse/MC-131462)
+(introduced in 18w06a), prevented some structures from generated in negative
+coordinates. In the case of quad witch huts, some of the huts won't generate
+unless the south-east hut has non-negative coordinates for both X and Z. This
+makes quad seeds four times as rare.
 
-If this bug is fixed, I will modify the pipeline to include negative
-coordinates.
+The bug should be fixed when 1.13-pre4 is released, but I've kept an option to
+emulate the bug behavior. I recommend against using the flag unless you really
+need to generate a world in one of the affected versions.
 
 ## TODOS:
 

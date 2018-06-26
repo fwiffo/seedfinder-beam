@@ -43,13 +43,7 @@ public class Structure {
 	public Location chunkLocationInRegion(long regionX, long regionZ, long worldSeed) {
 		setSeed(regionX, regionZ, worldSeed);
 		int x = getChunkInRegion();
-		if (x < 2 && regionX < 0) { // Emulating 1.13 bug MC-131462.
-			return null;
-		}
 		int z = getChunkInRegion();
-		if (z < 2 && regionZ < 0) { // Emulating 1.13 bug MC-131462.
-			return null;
-		}
 		return new Location(x, z);
 	}
 
@@ -57,16 +51,10 @@ public class Structure {
 			long regionX, long regionZ, long worldSeed, int edgeSize) {
 		setSeed(regionX, regionZ, worldSeed);
 		int x = getChunkInRegion();
-		if (x < 2 && regionX < 0) { // Emulating 1.13 bug MC-131462.
-			return null;
-		}
 		if (x >= edgeSize && x < structurePosRange - edgeSize) {
 			return null;
 		}
 		int z = getChunkInRegion();
-		if (z < 2 && regionZ < 0) { // Emulating 1.13 bug MC-131462.
-			return null;
-		}
 		if (z >= edgeSize && z < structurePosRange - edgeSize) {
 			return null;
 		}
