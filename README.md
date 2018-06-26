@@ -38,6 +38,9 @@ fine though.
     Bulk search mode ignores search options other than seed range, search radius
     and timeout. Outputs a binary format of all quad huts seed for further
     searching later.
+  --emulate_MC_131462=<boolean>
+    Default: false
+    Emulate the 1.13 snapshot coordinate bug, MC-131462.
   --end_seed=<String>
     Default: 1G
     Lower 48 bits of end seed for search; 0 to 256T. suffixes of K, M, G and T
@@ -72,10 +75,18 @@ fine though.
   --woodland_mansions=<int>
     Default: 0
     Search for seeds with a number nearby woodland mansions.
+
 ```
 
 Be aware that seeds matching some of these criteria are rare, and some
 combinations will take days to find, if they exist at all.
+
+On a per-seed basis, some are much slower than others. The more biome generation
+necessary for a filter, the slower it is. The exception is the first step -
+finding seeds with potential, which is slow because of the enormous number of
+non-working seeds that must be eliminated. The pipeline places the faster steps
+earlier where possible, to eliminate as many seeds as possible before the slow
+steps.
 
 ### Running locally
 
@@ -128,6 +139,37 @@ You can load it later with the `--input` flag. Using the `--input` flag will
 ignore the search radius (for witch huts only), seed range and timeout. Instead,
 it will read verified quad hut seeds from the provided Avro file. Seeds can be
 further narrowed down with any of the other search parameters.
+
+## Statistics
+
+Pulled from a sample of 26,843,554,600 48-bit base seeds (seeds 0-25G in
+this program).
+
+ - Represents 1.76 quadrillion full seeds (1,759,218,604,441,600).
+ - 784 of the 48-bit seed families have quad-hut _potential_ - 1:34.2 million.
+ - That represents 51,380,224 full seeds.
+ - 278 of the 48-bit families have at least one real quad hut seed.
+ - 164,356 total seeds are real quad huts - 1:10.7 billion.
+
+The distribution of 48-bit potential seeds relative to full seeds is very
+clumpy. About 2/3 have no real seeds, but a lot have 20+ or so; a smaller number
+in the single digits. If you look at seeds from the same family, they often have
+similar looking biome generation. For example, the outline of the swamp biome
+around the huts might be identical.
+
+The reason why seeds that share the lower 48 bits have the same structure
+generation has to do with the algorithm used by the Java RNG (for mathy reasons,
+it only uses the lower 48 bits of whatever number you seed it with.) There may
+be other aspects which are exploitable to improve the search performance
+further. It would be easy to imagine a Minecraft implementation where everything
+about the world was only affected by the lower 48 bits of the seed.
+
+For additional search options of the above:
+ - 32 families but only 2 full seeds match `--ocean_monument_near_huts=7`.
+ - 7758 seeds with 1 woodland mansion within 2.5km.
+ - 209 seeds with 2 woodland mansions within 2.5km.
+ - 2 seeds with 3 woodland mansions within 2.5km.
+ - 45 seeds with all biomes within 2km of spawn.
 
 ## Note on Minecraft versions
 
