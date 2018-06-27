@@ -2,6 +2,7 @@ package org.fwiffo.seedfinder.types;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 
@@ -42,7 +43,7 @@ public class SeedMetadata implements Serializable {
 		this.monuments = monuments;
 	}
 
-	public String asString() {
+	public String toString() {
 		ArrayList<String> parts = new ArrayList<String>(8);
 
 		parts.add(String.format("%20d", seed));
@@ -52,10 +53,22 @@ public class SeedMetadata implements Serializable {
 		if (huts != null) {
 			parts.add("huts:");
 			for (Location hut : huts) {
-				parts.add(hut.asString());
+				parts.add(hut.toString());
 			}
 		}
 
 		return String.join(" ", parts);
+	}
+
+	public boolean equals(Object other) {
+		if (other == this) return true;
+		if (other == null) return false;
+		if (getClass() != other.getClass()) return false;
+		SeedMetadata otherSeed = (SeedMetadata)other;
+		return (seed == otherSeed.seed &&
+				spawn.equals(otherSeed.spawn) &&
+				Arrays.equals(huts, otherSeed.huts) &&
+				Arrays.equals(mansions, otherSeed.mansions) &&
+				Arrays.equals(monuments, otherSeed.monuments));
 	}
 }

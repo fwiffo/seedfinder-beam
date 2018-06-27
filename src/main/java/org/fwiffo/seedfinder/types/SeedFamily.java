@@ -1,6 +1,7 @@
 package org.fwiffo.seedfinder.types;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.apache.beam.sdk.coders.AvroCoder;
@@ -61,6 +62,18 @@ public class SeedFamily implements Serializable {
 
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
 		return new SeedMetadata(fullSeed, spawn, huts, mansions, monuments);
+	}
+
+	public boolean equals(Object other) {
+		if (other == this) return true;
+		if (other == null) return false;
+		if (getClass() != other.getClass()) return false;
+		SeedFamily otherFamily = (SeedFamily)other;
+		return (baseSeed == otherFamily.baseSeed &&
+				fullSeeds.equals(otherFamily.fullSeeds) &&
+				Arrays.equals(huts, otherFamily.huts) &&
+				Arrays.equals(mansions, otherFamily.mansions) &&
+				Arrays.equals(monuments, otherFamily.monuments));
 	}
 }
 

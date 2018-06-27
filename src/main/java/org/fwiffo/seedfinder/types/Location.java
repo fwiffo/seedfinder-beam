@@ -16,7 +16,15 @@ public class Location implements java.io.Serializable {
 		this.z = z;
 	}
 
-	public String asString() {
+	public String toString() {
 		return String.format("(%5d, %5d)", x, z);
+	}
+
+	public boolean equals(Object other) {
+		if (other == this) return true;
+		if (other == null) return false;
+		if (getClass() != other.getClass()) return false;
+		Location otherLocation = (Location)other;
+		return (x == otherLocation.x && z == otherLocation.z);
 	}
 }

@@ -249,7 +249,7 @@ public class SeedFinderPipeline {
 			.apply("ConvertToText", ParDo.of(new DoFn<KV<Long, SeedMetadata>, String>() {
 				@ProcessElement
 				public void processElement(ProcessContext c) {
-					c.output(c.element().getValue().asString());
+					c.output(c.element().getValue().toString());
 				}
 			}))
 			.apply("WriteSeedsAsText", TextIO.write().to(options.getOutput()));
