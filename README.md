@@ -38,9 +38,6 @@ fine though.
     Bulk search mode ignores search options other than seed range, search radius
     and timeout. Outputs a binary format of all quad huts seed for further
     searching later.
-  --emulate_MC_131462=<boolean>
-    Default: false
-    Emulate the 1.13 snapshot coordinate bug, MC-131462.
   --end_seed=<String>
     Default: 1G
     Lower 48 bits of end seed for search; 0 to 256T. suffixes of K, M, G and T
@@ -152,10 +149,9 @@ this program).
  - 164,356 total seeds are real quad huts - 1:10.7 billion.
 
 The distribution of 48-bit potential seeds relative to full seeds is very
-clumpy. About 2/3 have no real seeds, but a lot have 20+ or so; a smaller number
-in the single digits. If you look at seeds from the same family, they often have
-similar looking biome generation. For example, the outline of the swamp biome
-around the huts might be identical.
+clumpy. If you look at seeds from the same family, they often have similar
+looking biome generation. For example, the outline of the swamp biome around the
+huts might be identical.
 
 The reason why seeds that share the lower 48 bits have the same structure
 generation has to do with the algorithm used by the Java RNG (for mathy reasons,
@@ -176,17 +172,17 @@ For additional search options of the above:
 Witch hut (and other structure) generation changed in the 1.13 snapshot 18w06a.
 There is a "magic" seed for seeding the RNG for structure generation; in
 previous versions it was 14357617 (and remains that for desert temples), but was
-changed to 14357620 for witch huts for 1.13.
+changed to 14357620 for witch huts for 1.13. Igloos and Jungle temples also
+changed.
 
 A bug in 1.13 snapshots, [MC-131462](https://bugs.mojang.com/browse/MC-131462)
 (introduced in 18w06a), prevented some structures from generated in negative
 coordinates. In the case of quad witch huts, some of the huts won't generate
-unless the south-east hut has non-negative coordinates for both X and Z. This
-makes quad seeds four times as rare.
+unless the south-east hut has non-negative coordinates for both X and Z.
 
-The bug should be fixed when 1.13-pre4 is released, but I've kept an option to
-emulate the bug behavior. I recommend against using the flag unless you really
-need to generate a world in one of the affected versions.
+The bug was fixed in 1.13-pre4, so please generate your world in that version or
+later. Or better yet, wait till 1.13 final since the prereleases are still
+really buggy.
 
 ## TODOS:
 

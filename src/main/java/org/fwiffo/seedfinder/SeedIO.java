@@ -17,7 +17,7 @@ public class SeedIO {
 	public static class AggregateSeeds
 			extends DoFn<KV<Long, Iterable<SeedMetadata>>, SeedFamily> {
 		private final Counter countFamilies = Metrics.counter(
-				AggregateSeeds.class, "seed-families-aggregated");
+				AggregateSeeds.class, "s8-seed-families-aggregated");
 
 		@ProcessElement
 		public void processElement(ProcessContext c)  {
@@ -39,35 +39,24 @@ public class SeedIO {
 
 	public static class AddKeys extends DoFn<SeedFamily, KV<Long, SeedFamily>> {
 		private final Counter countInput = Metrics.counter(
-				AddKeys.class, "precomputed-seed-families-read");
+				AddKeys.class, "s0-precomputed-seed-families-read");
 		private final Counter countFull = Metrics.counter(
-				AddKeys.class, "precomputed-seed-full-seeds-read");
-		private final boolean emulateBug;
-
-		public AddKeys() {
-			this.emulateBug = false;
-		}
-
-		public AddKeys(boolean emulateBug) {
-			this.emulateBug = emulateBug;
-		}
+				AddKeys.class, "s0-precomputed-seed-full-seeds-read");
 
 		@ProcessElement
 		public void ProcessElement(ProcessContext c) {
 			SeedFamily family = c.element();
-			if (!emulateBug || family.huts[3].x >= 0 && family.huts[3].z >= 0) {
-				c.output(KV.of(family.baseSeed, family));
-				countInput.inc(family.fullSeeds.size());
-			}
+			c.output(KV.of(family.baseSeed, family));
+			countInput.inc(family.fullSeeds.size());
 		}
 	}
 
 	public static class DeaggregateSeeds
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 		private final Counter countInput = Metrics.counter(
-				DeaggregateSeeds.class, "searched-seed-families-deaggregated");
+				DeaggregateSeeds.class, "s3-searched-seed-families-deaggregated");
 		private final Counter countExtracted = Metrics.counter(
-				DeaggregateSeeds.class, "full-seeds-extracted");
+				DeaggregateSeeds.class, "s3-full-seeds-extracted");
 
 		@ProcessElement
 		public void processElement(ProcessContext c)  {

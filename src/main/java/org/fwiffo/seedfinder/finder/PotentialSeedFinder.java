@@ -27,38 +27,27 @@ public class PotentialSeedFinder extends SeedFinder {
 		private static final int MAX_EDGE = 22;
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-checked");
+				HasPotentialQuadHuts.class, "s0-quad-huts-48bit-seeds-checked");
 		private final Counter countPotentialFound = Metrics.counter(
-				HasPotentialQuadHuts.class, "quad-huts-48bit-seeds-with-potential-found");
+				HasPotentialQuadHuts.class, "s0-quad-huts-48bit-seeds-with-potential-found");
 
 		// Radius to search, in regions. User specifies as blocks, and it's
 		// rounded up to the nearest region.
 		private final int radius;
-		// Emulate 1.13 snapshot bug MC-131462.
-		private final boolean emulateBug;
 
-		public HasPotentialQuadHuts() {
-			this.radius = 4;
-			this.emulateBug = false;
-		}
-
-		public HasPotentialQuadHuts(int radiusBlocks, boolean emulateBug) {
+		public HasPotentialQuadHuts(int radiusBlocks) {
 			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
 			this.radius = (int)Math.ceil(
 					(float)radiusBlocks / threadWitchHut.get().structureRegionSize / 16);
-			this.emulateBug = emulateBug;
 		}
 
 		private SeedFamily checkBaseSeed(WitchHut hut, long baseSeed) {
-			// MC-131462 prevents East or South huts from spawning in negative
-			// X/Z coordinates respecitvely. The fix should be fixed in the next
-			// release after 1.13-pre3.
-			int neg = emulateBug ? 0 : -radius;
-
 			// As an optimiation, skips by two to find potential huts that could
 			// be a member of a quad hut group while only checking 1 out of 4.
-			for (int regionX=neg; regionX < radius; regionX += (regionX < radius-2 ? 2 : 1)) {
-				for (int regionZ=neg; regionZ < radius; regionZ += (regionZ < radius-2 ? 2 : 1)) {
+			for (int regionX=-radius; regionX < radius;
+					regionX += (regionX < radius-2 ? 2 : 1)) {
+				for (int regionZ=-radius; regionZ < radius;
+						regionZ += (regionZ < radius-2 ? 2 : 1)) {
 					Location check = hut.chunkLocationInRegionEdge(
 							regionX, regionZ, baseSeed, HUT_CLOSENESS);
 					if (check == null) {
@@ -129,7 +118,7 @@ public class PotentialSeedFinder extends SeedFinder {
 		private final int minEdge;
 		private final int maxEdge;
 		private final Counter countPotentialFound = Metrics.counter(
-				HasPotentialOceanMonuments.class, "monument-48bit-seeds-with-potential-found");
+				HasPotentialOceanMonuments.class, "s1-monument-48bit-seeds-with-potential-found");
 
 		public HasPotentialOceanMonuments(int closeness) {
 			this.closeness = closeness;
@@ -183,10 +172,6 @@ public class PotentialSeedFinder extends SeedFinder {
 		// Radius to search, in regions. User specifies as blocks, and it's
 		// rounded up to the nearest region.
 		private final int radius;
-
-		public FindPotentialWoodlandMansions() {
-			this.radius = 2;
-		}
 
 		public FindPotentialWoodlandMansions(int radiusBlocks) {
 			// Radius in blocks / 16 blocks per chunk / 32 chunks per region

@@ -62,11 +62,11 @@ public class FullSeedFinder extends SeedFinder {
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				VerifyQuadHuts.class, "quad-huts-full-seeds-checked");
+				VerifyQuadHuts.class, "s3-quad-huts-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
-				VerifyQuadHuts.class, "quad-huts-full-seeds-verified");
+				VerifyQuadHuts.class, "s3-quad-huts-full-seeds-verified");
 		private final Distribution verifiedPerFamily = Metrics.distribution(
-				VerifyQuadHuts.class, "quad-huts-verified-per-family");
+				VerifyQuadHuts.class, "s3-quad-huts-verified-per-family");
 
 		private static boolean allHutsWillSpawn(
 				BiomeGenerator generator, WitchHut hut, Location[] huts) {
@@ -103,9 +103,9 @@ public class FullSeedFinder extends SeedFinder {
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				VerifyOceanMonuments.class, "monument-full-seeds-checked");
+				VerifyOceanMonuments.class, "s4-monument-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
-				VerifyOceanMonuments.class, "monument-full-seeds-verified");
+				VerifyOceanMonuments.class, "s4-monument-full-seeds-verified");
 
 		@ProcessElement
 		public void processElement(ProcessContext c) {
@@ -128,15 +128,11 @@ public class FullSeedFinder extends SeedFinder {
 			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				VerifyOceanMonuments.class, "woodland-mansion-full-seeds-checked");
+				VerifyOceanMonuments.class, "s5-woodland-mansion-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
-				VerifyWoodlandMansions.class, "woodland-mansion-full-seeds-verified");
+				VerifyWoodlandMansions.class, "s5-woodland-mansion-full-seeds-verified");
 
 		private final int minMansions;
-
-		public VerifyWoodlandMansions() {
-			this.minMansions = 1;
-		}
 
 		public VerifyWoodlandMansions(int minMansions) {
 			this.minMansions = minMansions;
@@ -192,9 +188,9 @@ public class FullSeedFinder extends SeedFinder {
 	public static class HasSpawnBiomes extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				HasSpawnBiomes.class, "spawn-biomes-full-seeds-checked");
+				HasSpawnBiomes.class, "s6-spawn-biomes-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
-				HasSpawnBiomes.class, "spawn-biomes-full-seeds-verified");
+				HasSpawnBiomes.class, "s6-spawn-biomes-full-seeds-verified");
 
 		private final BiomeSearchConfig config;
 
@@ -228,14 +224,10 @@ public class FullSeedFinder extends SeedFinder {
 		};
 
 		private final Counter countSeedsChecked = Metrics.counter(
-				HasAllBiomesNearby.class, "all-biomes-full-seeds-checked");
+				HasAllBiomesNearby.class, "s7-all-biomes-full-seeds-checked");
 		private final Counter countSeedsFound = Metrics.counter(
-				HasAllBiomesNearby.class, "all-biomes-full-seeds-verified");
+				HasAllBiomesNearby.class, "s7-all-biomes-full-seeds-verified");
 		private final int radius;
-
-		public HasAllBiomesNearby() {
-			this.radius = 2048;
-		}
 
 		public HasAllBiomesNearby(int radius) {
 			this.radius = radius;

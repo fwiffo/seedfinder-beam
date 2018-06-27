@@ -117,7 +117,9 @@ public class SeedFinderPipeline {
 		void setWoodland_mansions(int value);
 
 		// TODO: Maybe add more options.
-		@Description("Search for seeds with specific biomes at spawn")
+		@Description("Search for seeds with specific biomes at spawn. Because of world " +
+				"generation changes in 1.13, a few seeds will have a different spawn location " +
+				"than predicted. This also affects amidst.")
 		@Default.Enum("none")
 		BiomeSearchConfig.Name getSpawn_biomes();
 		void setSpawn_biomes(BiomeSearchConfig.Name value);
@@ -126,11 +128,6 @@ public class SeedFinderPipeline {
 		@Default.Boolean(false)
 		boolean getAll_biomes_nearby();
 		void setAll_biomes_nearby(boolean value);
-
-		@Description("Emulate the 1.13 snapshot coordinate bug, MC-131462.")
-		@Default.Boolean(false)
-		boolean getEmulate_MC_131462();
-		void setEmulate_MC_131462(boolean value);
 
 		// TODO: Lots of a specific biome nearby; e.g. lots of mushroom islands.
 		// TODO: Stronghold close to quad huts. Stronghold location search
@@ -164,7 +161,7 @@ public class SeedFinderPipeline {
 		ArrayList<String> formatted = new ArrayList<String>();
 		formatted.add("\nCounters:");
 		for (String key : counters.keySet()) {
-			formatted.add(String.format("%45s: %d", key, counters.get(key)));
+			formatted.add(String.format("%50s: %d", key, counters.get(key)));
 		}
 		LOG.info(String.join("\n", formatted));
 	}
@@ -271,7 +268,6 @@ public class SeedFinderPipeline {
 		//     searches which is different from the quad hut radius).
 
 		String input = options.getInput();
-		boolean emulateBug = options.getEmulate_MC_131462();
 		PCollection<KV<Long, SeedFamily>> potentialSeeds;
 		if ("".equals(input)) {
 			// Search a sequence of seeds.
@@ -291,8 +287,7 @@ public class SeedFinderPipeline {
 			potentialSeeds = p
 				.apply("Generate48BitSeeds", seeds48bit)
 				.apply("FindPotentialQuadHuts",
-						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(
-								searchRadius, emulateBug)));
+						ParDo.of(new PotentialSeedFinder.HasPotentialQuadHuts(searchRadius)));
 
 		} else {
 			// Start with precomputed quad witch hut seeds.
@@ -304,7 +299,7 @@ public class SeedFinderPipeline {
 			LOG.info(String.format("Reading precomputed seeds from \"%s\"...", input));
 			potentialSeeds = p
 				.apply("ReadPrecomputedSeeds", AvroIO.read(SeedFamily.class).from(input))
-				.apply("AddKeys", ParDo.of(new SeedIO.AddKeys(emulateBug)));
+				.apply("AddKeys", ParDo.of(new SeedIO.AddKeys()));
 		}
 
 		if (options.getBulk_search_mode()) {
