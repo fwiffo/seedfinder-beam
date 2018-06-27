@@ -1,5 +1,7 @@
 # Beam Seedfinder
 
+[![Build Status](https://travis-ci.org/fwiffo/seedfinder-beam.svg?branch=master)](https://travis-ci.org/fwiffo/seedfinder-beam)
+
 Minecraft seedfinder written for Apache Beam, so you can throw lots of compute
 at it to find comprehensive lists of seeds or seek out very rare seeds.
 
