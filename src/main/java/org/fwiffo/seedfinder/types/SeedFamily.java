@@ -1,6 +1,7 @@
 package org.fwiffo.seedfinder.types;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 
@@ -62,6 +63,20 @@ public class SeedFamily implements Serializable {
 
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
 		return new SeedMetadata(fullSeed, spawn, huts, mansions, monuments);
+	}
+
+	public String toString() {
+		ArrayList<String> parts = new ArrayList<String>(8);
+
+		parts.add(String.format("%20d", baseSeed));
+		if (huts.length > 0) {
+			parts.add("huts:");
+			for (Location hut : huts) {
+				parts.add(hut.toString());
+			}
+		}
+
+		return String.join(" ", parts);
 	}
 
 	public boolean equals(Object other) {
