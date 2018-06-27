@@ -29,10 +29,11 @@ public class SeedIOTest {
 	@Rule
 	public final transient TestPipeline p = TestPipeline.create();
 
+	private final static Location[] empty = new Location[0];
+
 	@Test
 	@Category(NeedsRunner.class)
 	public void testAggregateDeaggregateSeeds() {
-		Location[] empty = new Location[0];
 		Location[] huts1 = new Location[]{new Location(11, 111)};
 		Location[] huts2 = new Location[]{new Location(22, 222)};
 		Location spawn1 = new Location(1, 11);

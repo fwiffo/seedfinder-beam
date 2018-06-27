@@ -20,17 +20,17 @@ import org.apache.beam.sdk.values.KV;
 
 import org.fwiffo.seedfinder.Constants;
 import org.fwiffo.seedfinder.finder.PotentialSeedFinder;
-import org.fwiffo.seedfinder.types.SeedFamily;
 import org.fwiffo.seedfinder.types.Location;
+import org.fwiffo.seedfinder.types.SeedFamily;
 
 @RunWith(JUnit4.class)
 public class PotentialSeedFinderTest {
 	@Rule
 	public final transient TestPipeline p = TestPipeline.create();
 
-	public final long startSeed = 200*1024*1024;
-	public final long endSeed = 256*1024*1024;
-	public final int radius = 2048;
+	private final static long startSeed = 200*1024*1024;
+	private final static long endSeed = 256*1024*1024;
+	private final static int radius = 2048;
 
 	@Test
 	@Category(NeedsRunner.class)
