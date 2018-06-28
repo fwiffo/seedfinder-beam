@@ -173,6 +173,9 @@ public class PotentialSeedFinder extends SeedFinder {
 		// rounded up to the nearest region.
 		private final int radius;
 
+		private final Counter countSeedsChecked = Metrics.counter(
+				FindPotentialWoodlandMansions.class, "s2-woodland-mansion-48bit-seeds-checked");
+
 		public FindPotentialWoodlandMansions(int radiusBlocks) {
 			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
 			this.radius = (int)Math.ceil(
@@ -197,6 +200,7 @@ public class PotentialSeedFinder extends SeedFinder {
 			mansions = mansionLocations.toArray(mansions);
 
 			c.output(KV.of(family.baseSeed, family.withMansions(mansions)));
+			countSeedsChecked.inc();
 		}
 	}
 }
