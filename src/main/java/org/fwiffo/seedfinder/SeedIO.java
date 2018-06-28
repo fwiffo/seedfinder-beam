@@ -47,7 +47,8 @@ public class SeedIO {
 		public void ProcessElement(ProcessContext c) {
 			SeedFamily family = c.element();
 			c.output(KV.of(family.baseSeed, family));
-			countInput.inc(family.fullSeeds.size());
+			countInput.inc();
+			countFull.inc(family.fullSeeds.size());
 		}
 	}
 
