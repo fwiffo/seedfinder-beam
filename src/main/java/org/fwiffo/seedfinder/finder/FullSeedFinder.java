@@ -58,6 +58,16 @@ public class FullSeedFinder extends SeedFinder {
 		return location;
 	}
 
+	private static boolean allHutsWillSpawn(
+			BiomeGenerator generator, WitchHut hut, Location[] huts, int offset) {
+		for (int i=offset; i<offset+4; i++) {
+			if (!hut.structureWillSpawn(huts[i], generator)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static class VerifyQuadHuts
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 
@@ -68,16 +78,6 @@ public class FullSeedFinder extends SeedFinder {
 		private final Distribution verifiedPerFamily = Metrics.distribution(
 				VerifyQuadHuts.class, "s3-quad-huts-verified-per-family");
 
-		private static boolean allHutsWillSpawn(
-				BiomeGenerator generator, WitchHut hut, Location[] huts) {
-			for (Location location : huts) {
-				if (!hut.structureWillSpawn(location, generator)) {
-					return false;
-				}
-			}
-			return true;
-		}
-
 		@ProcessElement
 		public void processElement(ProcessContext c) {
 			WitchHut hut = threadWitchHut.get();
@@ -87,7 +87,7 @@ public class FullSeedFinder extends SeedFinder {
 			for (long high=0; high<1<<16; high++) {
 				long fullSeed = (high<<48) ^ family.baseSeed;
 				BiomeGenerator generator = new BiomeGenerator(fullSeed);
-				if (allHutsWillSpawn(generator, hut, family.huts)) {
+				if (allHutsWillSpawn(generator, hut, family.huts, 0)) {
 					Location spawn = locateSpawn(fullSeed, generator);
 					c.output(KV.of(family.baseSeed, family.expanded(fullSeed, spawn)));
 					count++;
@@ -96,6 +96,25 @@ public class FullSeedFinder extends SeedFinder {
 			countSeedsChecked.inc(1<<16);
 			countSeedsFound.inc(count);
 			verifiedPerFamily.update(count);
+		}
+	}
+
+	public static class VerifySecondHuts
+			extends DoFn<KV<Long, SeedMetadata>, KV<Long, SeedMetadata>> {
+
+		private final Counter countSeedsFound = Metrics.counter(
+				VerifySecondHuts.class, "s3-second-huts-full-seeds-verified");
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			WitchHut hut = threadWitchHut.get();
+			SeedMetadata seed = c.element().getValue();
+
+			BiomeGenerator generator = new BiomeGenerator(seed.seed);
+			if (!allHutsWillSpawn(generator, hut, seed.huts, 4)) return;
+
+			c.output(c.element());
+			countSeedsFound.inc();
 		}
 	}
 

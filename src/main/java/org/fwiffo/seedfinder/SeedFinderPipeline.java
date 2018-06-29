@@ -116,6 +116,11 @@ public class SeedFinderPipeline {
 		int getWoodland_mansions();
 		void setWoodland_mansions(int value);
 
+		@Description("Search for a second set of quad huts! Probably doesn't exist.")
+		@Default.Integer(0)
+		int getSecond_quad_huts();
+		void setSecond_quad_huts(int value);
+
 		// TODO: Maybe add more options.
 		@Description("Search for seeds with specific biomes at spawn. Because of world " +
 				"generation changes in 1.13, a few seeds will have a different spawn location " +
@@ -186,6 +191,14 @@ public class SeedFinderPipeline {
 
 	public static void narrowSearch(
 			PCollection<KV<Long, SeedFamily>> potentialSeeds, SeedFinderOptions options) {
+		int searchRadius = options.getSearch_radius();
+
+		int secondHuts = options.getSecond_quad_huts();
+		if (secondHuts > 0) {
+			potentialSeeds = potentialSeeds
+				.apply("FindPotentialSecondQuadHuts",
+						ParDo.of(new PotentialSeedFinder.HasSecondQuadHuts(secondHuts)));
+		}
 
 		// Checks for potential ocean monuments within the desired distance
 		// of quad huts.
@@ -200,7 +213,6 @@ public class SeedFinderPipeline {
 		// There are no restrictions on the mansion locations, so all seed
 		// families will have many.
 		int numMansions = options.getWoodland_mansions();
-		int searchRadius = options.getSearch_radius();
 		if (numMansions > 0) {
 			potentialSeeds = potentialSeeds
 				.apply("FindPotentialWoodlandMansions",
@@ -217,6 +229,12 @@ public class SeedFinderPipeline {
 			// Deaggregate from the pre-verified seed families.
 			fullSeeds = potentialSeeds
 				.apply("ExtractFullSeeds", ParDo.of(new SeedIO.DeaggregateSeeds()));
+		}
+
+		if (secondHuts > 0) {
+			fullSeeds = fullSeeds
+				.apply("VerifySecondHuts",
+						ParDo.of(new FullSeedFinder.VerifySecondHuts()));
 		}
 
 		if (monumentNear > 0) {

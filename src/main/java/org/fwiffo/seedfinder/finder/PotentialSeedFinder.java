@@ -20,11 +20,55 @@ import org.fwiffo.seedfinder.types.SeedFamily;
 
 public class PotentialSeedFinder extends SeedFinder {
 	private static final Logger LOG = LoggerFactory.getLogger(PotentialSeedFinder.class);
+	private static final int HUT_CLOSENESS = 2;
+	private static final int MIN_EDGE = 1;
+	private static final int MAX_EDGE = 22;
+
+	private static Location[] quadHutsForRegion(
+			WitchHut hut, long baseSeed, int regionX, int regionZ) {
+
+		Location check = hut.chunkLocationInRegionEdge(
+				regionX, regionZ, baseSeed, HUT_CLOSENESS);
+		if (check == null) {
+			return null;
+		}
+
+		// If this region contains a witch hut that could be part
+		// of a quad hut configuration, then start checking that
+		// grouping from what would be the top left, based on this
+		// first identified hut.
+		int rx = check.x <= MIN_EDGE ? regionX-1 : regionX;
+		int rz = check.z <= MIN_EDGE ? regionZ-1 : regionZ;
+
+		Location topLeft = hut.chunkLocationInRegion(rx, rz, baseSeed);
+		if (topLeft == null || topLeft.x < MAX_EDGE || topLeft.z < MAX_EDGE) {
+			return null;
+		}
+
+		Location topRight = hut.chunkLocationInRegion(rx+1, rz, baseSeed);
+		if (topRight == null || topRight.x > MIN_EDGE || topRight.z < MAX_EDGE) {
+			return null;
+		}
+
+		Location bottomLeft = hut.chunkLocationInRegion(rx, rz+1, baseSeed);
+		if (bottomLeft == null || bottomLeft.x < MAX_EDGE || bottomLeft.z > MIN_EDGE) {
+			return null;
+		}
+
+		Location bottomRight = hut.chunkLocationInRegion(rx+1, rz+1, baseSeed);
+		if (bottomRight == null || bottomRight.x > MIN_EDGE || bottomRight.z > MIN_EDGE) {
+			return null;
+		}
+
+		return new Location[]{
+			hut.fullLocation(rx, rz, topLeft),
+			hut.fullLocation(rx+1, rz, topRight),
+			hut.fullLocation(rx, rz+1, bottomLeft),
+			hut.fullLocation(rx+1, rz+1, bottomRight),
+		};
+	}
 
 	public static class HasPotentialQuadHuts extends DoFn<Long, KV<Long, SeedFamily>> {
-		private static final int HUT_CLOSENESS = 2;
-		private static final int MIN_EDGE = 1;
-		private static final int MAX_EDGE = 22;
 
 		private final Counter countSeedsChecked = Metrics.counter(
 				HasPotentialQuadHuts.class, "s0-quad-huts-48bit-seeds-checked");
@@ -48,45 +92,8 @@ public class PotentialSeedFinder extends SeedFinder {
 					regionX += (regionX < radius-2 ? 2 : 1)) {
 				for (int regionZ=-radius; regionZ < radius;
 						regionZ += (regionZ < radius-2 ? 2 : 1)) {
-					Location check = hut.chunkLocationInRegionEdge(
-							regionX, regionZ, baseSeed, HUT_CLOSENESS);
-					if (check == null) {
-						continue;
-					}
-
-					// If this region contains a witch hut that could be part
-					// of a quad hut configuration, then start checking that
-					// grouping from what would be the top left, based on this
-					// first identified hut.
-					int rx = check.x <= MIN_EDGE ? regionX-1 : regionX;
-					int rz = check.z <= MIN_EDGE ? regionZ-1 : regionZ;
-
-					Location topLeft = hut.chunkLocationInRegion(rx, rz, baseSeed);
-					if (topLeft == null || topLeft.x < MAX_EDGE || topLeft.z < MAX_EDGE) {
-						continue;
-					}
-
-					Location topRight = hut.chunkLocationInRegion(rx+1, rz, baseSeed);
-					if (topRight == null || topRight.x > MIN_EDGE || topRight.z < MAX_EDGE) {
-						continue;
-					}
-
-					Location bottomLeft = hut.chunkLocationInRegion(rx, rz+1, baseSeed);
-					if (bottomLeft == null || bottomLeft.x < MAX_EDGE || bottomLeft.z > MIN_EDGE) {
-						continue;
-					}
-
-					Location bottomRight = hut.chunkLocationInRegion(rx+1, rz+1, baseSeed);
-					if (bottomRight == null || bottomRight.x > MIN_EDGE || bottomRight.z > MIN_EDGE) {
-						continue;
-					}
-
-					Location[] huts = new Location[]{
-						hut.fullLocation(rx, rz, topLeft),
-						hut.fullLocation(rx+1, rz, topRight),
-						hut.fullLocation(rx, rz+1, bottomLeft),
-						hut.fullLocation(rx+1, rz+1, bottomRight),
-					};
+					Location[] huts = quadHutsForRegion(hut, baseSeed, regionX, regionZ);
+					if (huts == null) continue;
 					return new SeedFamily(baseSeed, huts);
 				}
 			}
@@ -109,6 +116,46 @@ public class PotentialSeedFinder extends SeedFinder {
 				}
 			}
 			countSeedsChecked.inc(endSeed-startSeed);
+		}
+	}
+
+	public static class HasSecondQuadHuts extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedFamily>> {
+
+		private final Counter countPotentialFound = Metrics.counter(
+				HasSecondQuadHuts.class, "s0-second-huts-48bit-seeds-with-potential-found");
+
+		// Radius to search, in regions. User specifies as blocks, and it's
+		// rounded up to the nearest region.
+		private final int radius;
+
+		public HasSecondQuadHuts(int radiusBlocks) {
+			// Radius in blocks / 16 blocks per chunk / 32 chunks per region
+			this.radius = (int)Math.ceil(
+					(float)radiusBlocks / threadWitchHut.get().structureRegionSize / 16);
+		}
+
+		@ProcessElement
+		public void processElement(ProcessContext c) {
+			WitchHut hut = threadWitchHut.get();
+			SeedFamily family = c.element().getValue();
+
+			Location old = hut.fullLocationToRegion(family.huts[0]);
+			for (int regionX=-radius; regionX < radius;
+					regionX += (regionX < radius-2 ? 2 : 1)) {
+				for (int regionZ=-radius; regionZ < radius;
+						regionZ += (regionZ < radius-2 ? 2 : 1)) {
+					if ((regionX == old.x || regionX == old.x+1) &&
+							(regionZ == old.z || regionZ == old.z+1)) {
+						continue;
+					}
+					Location[] huts = quadHutsForRegion(hut, family.baseSeed, regionX, regionZ);
+					if (huts != null) {
+						SeedFamily result = family.moreHuts(huts);
+						c.output(KV.of(family.baseSeed, result));
+						countPotentialFound.inc();
+					}
+				}
+			}
 		}
 	}
 

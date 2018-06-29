@@ -61,6 +61,15 @@ public class SeedFamily implements Serializable {
 		return new SeedFamily(baseSeed, fullSeeds, huts, mansions, monuments);
 	}
 
+	public SeedFamily moreHuts(Location[] more) {
+		Location[] extra = new Location[]{
+			huts[0], huts[1], huts[2], huts[3],
+			more[0], more[1], more[2], more[3],
+		};
+
+		return new SeedFamily(baseSeed, fullSeeds, extra, mansions, monuments);
+	}
+
 	public SeedMetadata expanded(long fullSeed, Location spawn) {
 		return new SeedMetadata(fullSeed, spawn, huts, mansions, monuments);
 	}
