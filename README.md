@@ -1,3 +1,11 @@
+# Please ignore this project now
+
+This method of finding seeds is outdated and crappy. I'm now working with
+[Cubitect's cubiomes implementation](https://github.com/Cubitect/cubiomes) which
+is massively superior in every way! I've created [a
+fork](https://github.com/fwiffo/cubiomes) which I've updated to Minecraft 1.13;
+I'm also adding new search options.
+
 # Beam Seedfinder
 
 [![Build Status](https://travis-ci.org/fwiffo/seedfinder-beam.svg?branch=master)](https://travis-ci.org/fwiffo/seedfinder-beam)
