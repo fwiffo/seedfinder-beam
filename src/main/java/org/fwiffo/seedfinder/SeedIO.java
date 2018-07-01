@@ -55,9 +55,9 @@ public class SeedIO {
 	public static class DeaggregateSeeds
 			extends DoFn<KV<Long, SeedFamily>, KV<Long, SeedMetadata>> {
 		private final Counter countInput = Metrics.counter(
-				DeaggregateSeeds.class, "s3-searched-seed-families-deaggregated");
+				DeaggregateSeeds.class, "s3-families-deaggregated");
 		private final Counter countExtracted = Metrics.counter(
-				DeaggregateSeeds.class, "s3-full-seeds-extracted");
+				DeaggregateSeeds.class, "s3-full-seeds-deaggregated");
 
 		@ProcessElement
 		public void processElement(ProcessContext c)  {

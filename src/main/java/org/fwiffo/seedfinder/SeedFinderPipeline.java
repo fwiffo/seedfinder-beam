@@ -116,7 +116,7 @@ public class SeedFinderPipeline {
 		int getWoodland_mansions();
 		void setWoodland_mansions(int value);
 
-		@Description("Search for a second set of quad huts! Probably doesn't exist.")
+		@Description("Search for a second set of quad huts! It's going to be pretty far away.")
 		@Default.Integer(0)
 		int getSecond_quad_huts();
 		void setSecond_quad_huts(int value);
